@@ -239,6 +239,22 @@ static unsigned int sysfs_get_value(struct ub_entity *uent, const char *object, 
     return (unsigned int)~0;
 }
 
+static char *sysfs_get_link(struct ub_entity *uent, const char *link_name)
+{
+    char r_path[OBJNAMELEN] = {};
+    char path[2 * OBJNAMELEN];
+
+    sysfs_obj_name(uent, link_name, path);
+
+    if (readlink(path, r_path, sizeof(r_path)) < 0)
+        return NULL;
+
+    sysfs_obj_name(uent, "", path);
+    strcat(path, r_path);
+
+    return realpath(path, NULL);
+}
+
 static void ub_link_dev(struct ub_access *uacc, struct ub_entity *uent)
 {
     uent->next = uacc->uents;
@@ -260,8 +276,22 @@ static void sysfs_ub_cleanup(struct ub_access *uacc)
 
 static int ub_scan_attr_cfg(struct ub_entity *uent, uint32_t uent_num)
 {
+    char *driver_path;
+
     uent->uent_num = uent_num;
     uent->par_uent_num = UB_INIT_PARENT;
+
+    strcpy(uent->driver_name, "No used driver");
+    driver_path = sysfs_get_link(uent, "driver");
+    if (driver_path) {
+        char *driver = strrchr(driver_path, '/');
+        driver = driver ? driver + 1 : driver_path;
+        if (strlen(driver) < MAX_DRIVER_NAME_LEN)
+            strcpy(uent->driver_name, driver);
+        else
+            uent->access->warning("Driver name len is too long\n");
+        free(driver_path);
+    }
 
     uent->entity_type = (uint8_t)sysfs_get_value(uent, "type", 1);
     uent->ubc_uent_num = sysfs_get_value(uent, "ubc", 1);

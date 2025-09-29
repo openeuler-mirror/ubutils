@@ -28,9 +28,10 @@
 #define UB_HOST_DEV_PARENT 0xFFFFFFFE
 #define MAX_UENT_NUM 0xFFFFF
 #define MAX_POSITION 0x3FFFFFFFFULL
+#define MAX_DRIVER_NAME_LEN 256
 
 #define UB_PRINTF(x, y) __attribute__((format(printf, x, y)))
-#define LSUB_OPTIONS "hlt"
+#define LSUB_OPTIONS "htlni:k"
 #define SETUB_OPTIONS "hs:b:g:d:e:u:"
 #define HASH_SIZE 4099
 #define HEX 16
@@ -80,11 +81,14 @@ struct ub_entity {
     uint32_t par_uent_num; /* parent dev's uent number */
     uint32_t scaned; /* topo show scaned */
     uint32_t printed; /* topo show printed */
+    char driver_name[MAX_DRIVER_NAME_LEN];
 };
 
 /* Options you can change */
 struct ub_access {
     unsigned int method; /* Access method */
+    int numeric_ids; /* numeric ids show in list */
+    int kernel_driver; /* kernel driver */
 
     struct ub_entity *uents; /* uents found on this bus */
 

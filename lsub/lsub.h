@@ -42,6 +42,7 @@ static inline bool ub_is_ibus_controller(struct ub_entity *uent)
     }
 }
 
+void ub_set_ids_file_path(struct ub_access *uacc, char *name, int to_be_freed);
 char *ub_lookup_name(struct ub_access *uacc, char *buf, size_t size,
                      uint32_t vendor_id, uint32_t device_id , uint32_t class_id);
 

@@ -545,3 +545,12 @@ char *ub_lookup_name(struct ub_access *uacc, char *buf, size_t size,
     ids_name.unknown = (char *)"Device";
     return format_name_pair(buf, size, &ids_name);
 }
+
+void ub_set_ids_file_path(struct ub_access *uacc, char *name, int to_be_freed)
+{
+    if (uacc->free_id_name)
+        free(uacc->id_file_name);
+
+    uacc->id_file_name = name;
+    uacc->free_id_name = to_be_freed;
+}

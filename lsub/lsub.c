@@ -27,7 +27,10 @@ static struct lsub_cmd_param ls_cmd;
 static char help_info[] =
 "Usage: lsub [<switches>]\n"
 "-t\t\tShow UB entity topo\n"
-"-l\t\tShow UB entity list\n";
+"-l\t\tShow UB entity list\n"
+"-n\t\tShow numeric ID: <entity_num> Class <class_code>: Device <vendor_id>:<device_id>\n"
+"-i <file>\tUse specified ID database instead of /usr/share/hwdata/ub.ids\n"
+"-k\t\tShow kernel drivers handling each entity\n";
 
 static void show_list(struct ub_access *uacc, uint32_t uent_num)
 {
@@ -39,8 +42,17 @@ static void show_list(struct ub_access *uacc, uint32_t uent_num)
             continue;
         }
 
-        str_name = ub_lookup_name(uacc, buf, sizeof(buf), uent->vendor_id, uent->device_id, uent->class_code);
+        if (uacc->numeric_ids) {
+            sprintf(numeric_name, "Class <%04x>: Device <%04x>:<%04x>",
+                    uent->class_code, uent->vendor_id, uent->device_id);
+            str_name = numeric_name;
+        } else {
+            str_name = ub_lookup_name(uacc, buf, sizeof(buf), uent->vendor_id, uent->device_id, uent->class_code);
+        }
         printf("<%05x> %s\n", uent->uent_num, str_name);
+        if (uacc->kernel_driver) {
+            printf("\tKernel driver in use: %s\n", uent->driver_name);
+        }
     }
 }
 
@@ -93,6 +105,26 @@ static int cmd_option_topo(struct ub_access *uacc)
     return 0;
 }
 
+static int cmd_option_numeric(struct ub_access *uacc)
+{
+    uacc->debug("numeric_ids enable\n");
+    uacc->numeric_ids = 1;
+    return 0;
+}
+
+static int cmd_option_kernel(struct ub_access *uacc)
+{
+    uacc->debug("kernel_driver enable\n");
+    uacc->kernel_driver = 1;
+    return 0;
+}
+
+static int cmd_option_ids(struct ub_access *uacc)
+{
+    ub_set_ids_file_path(uacc, optarg, 0);
+    return 0;
+}
+
 static int cmd_option_mue_ue_list(struct ub_access *uacc)
 {
     uacc->debug("mue_ue_flag enable\n");
@@ -104,6 +136,9 @@ static struct cmd_option cmd_options[] = {
     { 'h', cmd_option_help },
     { 't', cmd_option_topo },
     { 'l', cmd_option_mue_ue_list },
+    { 'n', cmd_option_numeric },
+    { 'i', cmd_option_ids },
+    { 'k', cmd_option_kernel },
 };
 
 static void cmd_option_further_proc(struct ub_access *uacc)
