@@ -28,10 +28,13 @@
 #define UB_HOST_DEV_PARENT 0xFFFFFFFE
 #define MAX_UENT_NUM 0xFFFFF
 #define MAX_POSITION 0x3FFFFFFFFULL
+#define UB_GUID_MAXLEN 128
+#define UB_INSTANCE_MAXLEN UB_GUID_MAXLEN
+#define UB_INSTANCE_PARA_NUM 4
 #define MAX_DRIVER_NAME_LEN 256
 
 #define UB_PRINTF(x, y) __attribute__((format(printf, x, y)))
-#define LSUB_OPTIONS "htlni:k"
+#define LSUB_OPTIONS "htlni:kbE:"
 #define SETUB_OPTIONS "hs:b:g:d:e:u:"
 #define HASH_SIZE 4099
 #define HEX 16
@@ -72,6 +75,7 @@ struct ub_entity {
     uint32_t entity_idx;
     uint32_t uent_num;
     uint32_t primary_entity;
+    uint32_t bi_eid;
     uint8_t is_mue;
 
     /* Fields for tool usage */
@@ -84,6 +88,14 @@ struct ub_entity {
     char driver_name[MAX_DRIVER_NAME_LEN];
 };
 
+struct ub_bi {
+    struct ub_bi *next;
+    char str[UB_GUID_MAXLEN];
+    uint8_t type;
+    uint32_t eid;
+    uint16_t upi;
+};
+
 /* Options you can change */
 struct ub_access {
     unsigned int method; /* Access method */
@@ -91,6 +103,8 @@ struct ub_access {
     int kernel_driver; /* kernel driver */
 
     struct ub_entity *uents; /* uents found on this bus */
+    struct ub_bi *bi; /* busInstance list found on ub system */
+    struct ub_bi *tail; /* store the last bi */
 
     /* Fields used internally */
     struct ub_methods *methods;
@@ -162,6 +176,8 @@ enum {
 struct lsub_cmd_param {
     /* selected uent number */
     uint32_t uent_num;
+    /* busInstance eid */
+    uint32_t bi_eid;
 };
 
 struct ub_guid {
@@ -218,6 +234,10 @@ int parse_x16(char *c, unsigned short *resp);
 void sysfs_get_if_mue(struct ub_entity *uent);
 void sysfs_get_mue_list(struct ub_entity *uent);
 void sysfs_get_ue_list(struct ub_entity *uent, uint8_t level);
+int ub_add_bi(struct ub_access *uacc, struct ub_bi *bi);
+void show_bi_info(struct ub_access *uacc, struct lsub_cmd_param *ls_cmd);
+int sysfs_get_bi(struct ub_access *uacc);
+
 
 extern struct ub_methods linux_sysfs;
 

@@ -419,3 +419,27 @@ void ub_cleanup(struct ub_access *uacc)
         free(dev);
     }
 }
+
+int ub_add_bi(struct ub_access *uacc, struct ub_bi *bi)
+{
+    struct ub_bi *new_bi;
+
+    new_bi = (struct ub_bi *)calloc(1, sizeof(struct ub_bi));
+    if (!new_bi) {
+        return -ENOMEM;
+    }
+
+    (void)strncpy(new_bi->str, bi->str, UB_GUID_MAXLEN - 1);
+    new_bi->type = bi->type;
+    new_bi->eid = bi->eid;
+    new_bi->upi = bi->upi;
+
+    if (uacc->bi) {
+        uacc->tail->next = new_bi;
+    } else {
+        uacc->bi = new_bi;
+    }
+    uacc->tail = new_bi;
+
+    return 0;
+}

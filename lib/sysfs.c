@@ -168,6 +168,107 @@ void sysfs_get_ue_list(struct ub_entity *uent, uint8_t level)
     (void)fclose(file);
 }
 
+static int ub_parse_instance_sys(struct ub_access *uacc, FILE *file, unsigned int start, unsigned int cnt)
+{
+    char buf[UB_INSTANCE_MAXLEN] = {0};
+    struct ub_bi bi = {0};
+    char str[HEX] = {0};
+    unsigned int i = 0;
+    int ret = 0;
+
+    if (cnt == 0)
+        return 0;
+
+    ret = snprintf(str, HEX, "%u", start);
+    if (ret < 0 || ret >= HEX) {
+        uacc->error("parse instance start point failed");
+        return -EINVAL;
+    }
+
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        uacc->error("Failed to reset sys instance file pointer for writing instance start point");
+        return -EIO;
+     }
+
+    if (fputs(str, file) < 0) {
+        uacc->error("Failed to set instance start point[%u] to sysfs", start);
+        return -EIO;
+    }
+
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        uacc->error("Failed to reset sys instance file pointer for reading instance entry");
+        return -EIO;
+     }
+
+    /* Ignore the first line */
+    (void)fgets(buf, (int)sizeof(buf), file);
+    while (i < cnt && fgets(buf, (int)sizeof(buf), file)) {
+        i++;
+        if (sscanf(buf, "guid:%s type:%01x eid:%05x upi:%04x\n", bi.str, (uint32_t *)&bi.type, &bi.eid, (uint32_t *)&bi.upi) != UB_INSTANCE_PARA_NUM) {
+            uacc->error("Syntax error in %s", buf);
+            continue;
+        }
+        ret = ub_add_bi(uacc, &bi);
+        if (ret) {
+            return ret;
+        }
+    }
+
+    return 0;
+}
+
+int sysfs_get_bi(struct ub_access *uacc)
+{
+#define MAX_CNT_PER_READ 32
+    char namebuf[OBJNAMELEN] = {0}, buf[UB_INSTANCE_MAXLEN] = {0};
+    unsigned int count, cycle, left, i;
+    int n, ret = 0;
+    FILE *file;
+
+    n = snprintf(namebuf, OBJNAMELEN, "%s/instance", sysfs_name(uacc));
+    if (n < 0 || n >= OBJNAMELEN) {
+        uacc->error("Instance file name too long");
+        return -EINVAL;
+    }
+
+    file = fopen(namebuf, "r+");
+    if (file == NULL) {
+        uacc->error("Open instance file failed");
+        return -EIO;
+    }
+
+    if (fgets(buf, (int)sizeof(buf), file)) {
+        /* just obtain count info, ignore from and show info */
+        if (sscanf(buf, "count 0x%x", &count) != 1) {
+            uacc->error("Syntax error in %s", buf);
+            (void)fclose(file);
+            return -EINVAL;
+        }
+    } else {
+        uacc->error("Failed to get instance count from sysfs");
+        (void)fclose(file);
+        return -EIO;
+    }
+
+    cycle = count / MAX_CNT_PER_READ;
+    left = count % MAX_CNT_PER_READ;
+
+    for (i = 0; i <= cycle; i++) {
+        if (i != cycle) {
+            ret = ub_parse_instance_sys(uacc, file, i * MAX_CNT_PER_READ, MAX_CNT_PER_READ);
+        } else {
+            ret = ub_parse_instance_sys(uacc, file, i * MAX_CNT_PER_READ, left);
+        }
+
+        if (ret) {
+            break;
+        }
+    }
+
+    (void)fclose(file);
+    return ret;
+}
+
 int sysfs_get_direct_link(struct ub_entity *uent)
 {
     uint32_t loc_port_num, link_port_num, link_uent_num;
@@ -300,6 +401,7 @@ static int ub_scan_attr_cfg(struct ub_entity *uent, uint32_t uent_num)
     uent->class_code = sysfs_get_value(uent, "class_code", 1);
     uent->entity_idx = sysfs_get_value(uent, "entity_idx", 1);
     uent->primary_entity = sysfs_get_value(uent, "primary_entity", 1);
+    uent->bi_eid = sysfs_get_value(uent, "instance", 1);
     sysfs_get_if_mue(uent);
     ub_link_dev(uent->access, uent); /* link uent in uacc */
 

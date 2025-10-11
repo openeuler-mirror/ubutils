@@ -16,6 +16,8 @@
 #include <ctype.h>
 #include "lsub.h"
 
+#define INVLID_EID_MSG          "Invalid EID"
+
 struct cmd_option {
     char character;
     int (*execute_func)(struct ub_access *uacc);
@@ -30,7 +32,11 @@ static char help_info[] =
 "-l\t\tShow UB entity list\n"
 "-n\t\tShow numeric ID: <entity_num> Class <class_code>: Device <vendor_id>:<device_id>\n"
 "-i <file>\tUse specified ID database instead of /usr/share/hwdata/ub.ids\n"
-"-k\t\tShow kernel drivers handling each entity\n";
+"-k\t\tShow kernel drivers handling each entity\n"
+"-b <-E <eid>>\tShow specific UB bus instance by EID, print bus instance list by default\n"
+"\n"
+"Selection of entities and so on:\n"
+"-E <eid>\tDisplay the bus instance with the specified EID\n";
 
 static void show_list(struct ub_access *uacc, uint32_t uent_num)
 {
@@ -89,6 +95,7 @@ static void show_mue_ue_list(struct ub_access *uacc, uint32_t uent_num)
 
 static int list_show_flag;
 static int mue_ue_flag;
+static int bi_flag;
 
 static int cmd_option_help(struct ub_access *uacc)
 {
@@ -132,6 +139,41 @@ static int cmd_option_mue_ue_list(struct ub_access *uacc)
     return 0;
 }
 
+static const char *parse_businstance(char *str)
+{
+    uint64_t bi_eid;
+
+    bi_eid = strtoul(str, NULL, HEX);
+    if ((bi_eid == 0) || (bi_eid > MAX_UENT_NUM)) {
+        return INVLID_EID_MSG;
+    }
+
+    ls_cmd.bi_eid = (uint32_t)bi_eid;
+    return NULL;
+}
+
+static int cmd_option_bi(struct ub_access *uacc)
+{
+    uacc->debug("bi_flag enable\n");
+    bi_flag = 1;
+    return 0;
+}
+
+static int cmd_option_bi_eid(struct ub_access *uacc)
+{
+    const char *err_msg;
+
+    uacc->debug("cmd_option_bi_eid\n");
+    if (optarg != NULL) {
+        if ((err_msg = parse_businstance(optarg))) {
+            (void)printf("%s\n", err_msg);
+            return -EINVAL;
+        }
+    }
+
+    return 0;
+}
+
 static struct cmd_option cmd_options[] = {
     { 'h', cmd_option_help },
     { 't', cmd_option_topo },
@@ -139,6 +181,8 @@ static struct cmd_option cmd_options[] = {
     { 'n', cmd_option_numeric },
     { 'i', cmd_option_ids },
     { 'k', cmd_option_kernel },
+    { 'b', cmd_option_bi },
+    { 'E', cmd_option_bi_eid },
 };
 
 static void cmd_option_further_proc(struct ub_access *uacc)
@@ -147,6 +191,8 @@ static void cmd_option_further_proc(struct ub_access *uacc)
         show_topo();
     } else if (mue_ue_flag) {
         show_mue_ue_list(uacc, ls_cmd.uent_num);
+    } else if (bi_flag) {
+        show_bi_info(uacc, &ls_cmd);
     } else if (list_show_flag) {
         show_list(uacc, ls_cmd.uent_num);
     }
