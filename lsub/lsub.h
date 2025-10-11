@@ -111,6 +111,11 @@ struct ub_bus_controller {
 #define CFG1_DEV_TOKEN_ID       (0x2D * CFG_DWORD_LEN)
 #define CFG1_BUS_EN             (0x2E * CFG_DWORD_LEN)
 #define CFG1_DEV_RS_ACESS_EN    (0x2F * CFG_DWORD_LEN)
+#define CFG1_DECODER_CAP_ID     0x1
+#define CFG1_JETTY_CAP_ID       0x2
+#define CFG1_INT_TYPE1_CAP_ID   0x3
+#define CFG1_INT_TYPE2_CAP_ID   0x4
+#define CFG1_UB_MEM_CAP_ID      0x6
 
 /* route table */
 #define ROUTE_TBL_NUM_OF_TLB_ENTRY          (0x1 * CFG_DWORD_LEN)
@@ -352,6 +357,8 @@ int lsub_cfg0_basic(struct ub_entity_cfg_info *info);
 int lsub_cfg0_cap(struct ub_entity_cfg_info *info, uint32_t cap_id);
 int cfg0_check_capid(struct ub_entity_cfg_info *info, uint32_t cap_id);
 int lsub_cfg1_basic(struct ub_entity_cfg_info *info);
+int lsub_cfg1_cap(struct ub_entity_cfg_info *info, uint32_t cap_id);
+int cfg1_check_capid(struct ub_entity_cfg_info *info, uint32_t cap_id);
 void ub_set_ids_file_path(struct ub_access *uacc, char *name, int to_be_freed);
 char *ub_lookup_name(struct ub_access *uacc, char *buf, size_t size,
                      uint32_t vendor_id, uint32_t device_id , uint32_t class_id);

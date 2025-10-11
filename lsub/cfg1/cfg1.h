@@ -14,4 +14,10 @@
 
 extern struct ub_entity_cfg_info *cfg1_info;
 
+void cfg1_decoder_cap(uint8_t *data, uint32_t data_len);
+void cfg1_jetty_cap(uint8_t *data, uint32_t data_len);
+void cfg1_int_type1_cap(uint8_t *data, uint32_t data_len);
+void cfg1_int_type2_cap(uint8_t *data, uint32_t data_len);
+void cfg1_ub_mem_cap(uint8_t *data, uint32_t data_len);
+
 #endif

@@ -293,6 +293,7 @@ static void show_slice(struct lsub_cmd_param *cmd, struct ub_entity_cfg_info *in
     } else if (type == CFG1_SLICE_TYPE) {
         ls_data = cmd->cfg1_slice;
         ls_basic = lsub_cfg1_basic;
+        ls_cap = lsub_cfg1_cap;
     } else {
         return;
     }
