@@ -41,6 +41,18 @@ int port_check_capid(struct ub_entity_cfg_info *info, uint32_t cap_id)
 
 static struct ub_cfg_cap_cat port_cap_array[] = {
     { PORT_CAP1_LINK, port_cap1_link },
+    { PORT_CAP2_LINK_LOG, port_cap2_link_log },
+    { PORT_CAP4_DATA_RATE1, port_capx_data_rate },
+    { PORT_CAP5_DATA_RATE2, port_capx_data_rate },
+    { PORT_CAP6_DATA_RATE3, port_capx_data_rate },
+    { PORT_CAP7_DATA_RATE4, port_capx_data_rate },
+    { PORT_CAP8_DATA_RATE5, port_capx_data_rate },
+    { PORT_CAP9_DATA_RATE6, port_capx_data_rate },
+    { PORT_CAP10_DATA_RATE7, port_capx_data_rate },
+    { PORT_CAP11_DATA_RATE8, port_capx_data_rate },
+    { PORT_CAP12_DATA_RATE9, port_capx_data_rate },
+    { PORT_CAP14_EYE_MONITOR, port_cap14_eye_monitor },
+    { PORT_CAP15_QDLWS, port_cap15_qdlws },
     { CFG_INVALID_CAP_ID, NULL }
 };
 

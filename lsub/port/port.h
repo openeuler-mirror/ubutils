@@ -30,4 +30,8 @@ extern struct val_desc bcrc_desc[BCRC_DESC_NUM];
 
 const char *get_description(uint64_t value, struct val_desc *table);
 void port_cap1_link(uint8_t *data, uint32_t data_len);
+void port_cap2_link_log(uint8_t *data, uint32_t data_len);
+void port_capx_data_rate(uint8_t *data, uint32_t data_len);
+void port_cap14_eye_monitor(uint8_t *data, uint32_t data_len);
+void port_cap15_qdlws(uint8_t *data, uint32_t data_len);
 #endif
