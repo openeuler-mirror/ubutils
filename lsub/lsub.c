@@ -17,6 +17,7 @@
 #include "lsub.h"
 
 #define INVLID_EID_MSG          "Invalid EID"
+#define INVLID_CNA_MSG          "Invalid CNA"
 
 struct cmd_option {
     char character;
@@ -36,7 +37,10 @@ static char help_info[] =
 "-b <-E <eid>>\tShow specific UB bus instance by EID, print bus instance list by default\n"
 "\n"
 "Selection of entities and so on:\n"
-"-E <eid>\tDisplay the bus instance with the specified EID\n";
+"-e <entity_num>\tDisplay the entity with the specified entity number,\n"
+"\t\tentity number is simplified numbering of ub entity in the ubus driver\n"
+"-E <eid>\tDisplay the bus instance with the specified EID\n"
+"-r <cna>\tShow UB entity route table in specified CNA\n";
 
 static void show_list(struct ub_access *uacc, uint32_t uent_num)
 {
@@ -93,7 +97,34 @@ static void show_mue_ue_list(struct ub_access *uacc, uint32_t uent_num)
     }
 }
 
+static const char *parse_entity(char *str)
+{
+    uint64_t uent_num;
+
+    uent_num = strtoul(str, NULL, HEX);
+    if ((uent_num == 0) || (uent_num > MAX_UENT_NUM)) {
+        return INVLID_EID_MSG;
+    }
+
+    ls_cmd.uent_num = (uint32_t)uent_num;
+    return NULL;
+}
+
+static const char *parse_cna(char *str)
+{
+    uint64_t cna;
+
+    cna = strtoul(str, NULL, HEX);
+    if (cna > MAX_CNA) {
+        return INVLID_CNA_MSG;
+    }
+
+    ls_cmd.cna = (uint32_t)cna;
+    return NULL;
+}
+
 static int list_show_flag;
+static int route_tbl_flag;
 static int mue_ue_flag;
 static int bi_flag;
 
@@ -129,6 +160,31 @@ static int cmd_option_kernel(struct ub_access *uacc)
 static int cmd_option_ids(struct ub_access *uacc)
 {
     ub_set_ids_file_path(uacc, optarg, 0);
+    return 0;
+}
+
+static int cmd_option_entity_name(struct ub_access *uacc)
+{
+    const char *err_msg;
+
+    uacc->debug("cmd_option_entity_name\n");
+    if ((err_msg = parse_entity(optarg))) {
+        (void)printf("%s\n", err_msg);
+        return -EINVAL;
+    }
+    return 0;
+}
+
+static int cmd_option_routetbl(struct ub_access *uacc)
+{
+    const char *err_msg;
+
+    if ((err_msg = parse_cna(optarg))) {
+        (void)printf("%s\n", err_msg);
+        return -EINVAL;
+    }
+    uacc->debug("route_tbl_flag enable\n");
+    route_tbl_flag = 1;
     return 0;
 }
 
@@ -180,6 +236,8 @@ static struct cmd_option cmd_options[] = {
     { 'l', cmd_option_mue_ue_list },
     { 'n', cmd_option_numeric },
     { 'i', cmd_option_ids },
+    { 'e', cmd_option_entity_name },
+    { 'r', cmd_option_routetbl },
     { 'k', cmd_option_kernel },
     { 'b', cmd_option_bi },
     { 'E', cmd_option_bi_eid },
@@ -189,6 +247,8 @@ static void cmd_option_further_proc(struct ub_access *uacc)
 {
     if (g_opt_topo) {
         show_topo();
+    } else if (route_tbl_flag) {
+        show_route_tbl(uacc, ls_cmd.uent_num, ls_cmd.cna);
     } else if (mue_ue_flag) {
         show_mue_ue_list(uacc, ls_cmd.uent_num);
     } else if (bi_flag) {

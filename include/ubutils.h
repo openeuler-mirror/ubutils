@@ -27,6 +27,7 @@
 #define UB_INIT_PARENT 0xFFFFFFFF
 #define UB_HOST_DEV_PARENT 0xFFFFFFFE
 #define MAX_UENT_NUM 0xFFFFF
+#define MAX_CNA 0xFFFF
 #define MAX_POSITION 0x3FFFFFFFFULL
 #define UB_GUID_MAXLEN 128
 #define UB_INSTANCE_MAXLEN UB_GUID_MAXLEN
@@ -34,7 +35,7 @@
 #define MAX_DRIVER_NAME_LEN 256
 
 #define UB_PRINTF(x, y) __attribute__((format(printf, x, y)))
-#define LSUB_OPTIONS "htlni:kbE:"
+#define LSUB_OPTIONS "htlni:kbE:r:e:"
 #define SETUB_OPTIONS "hs:b:g:d:e:u:"
 #define HASH_SIZE 4099
 #define HEX 16
@@ -176,6 +177,8 @@ enum {
 struct lsub_cmd_param {
     /* selected uent number */
     uint32_t uent_num;
+    /* selected CNA */
+    uint32_t cna;
     /* busInstance eid */
     uint32_t bi_eid;
 };
