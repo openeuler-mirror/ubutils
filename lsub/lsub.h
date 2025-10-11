@@ -86,6 +86,8 @@ struct ub_bus_controller {
 #define CFG0_USER_CNA           (0x2B * CFG_DWORD_LEN)
 #define CFG0_SHP_CAP_ID         0x2
 #define CFG0_ERR_RECORD_CAP_ID  0x3
+#define CFG0_ERR_INFO_CAP_ID    0x4
+#define CFG0_EMQ_CAP_ID         0x5
 
 /* route table */
 #define ROUTE_TBL_NUM_OF_TLB_ENTRY          (0x1 * CFG_DWORD_LEN)

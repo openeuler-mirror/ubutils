@@ -45,6 +45,8 @@ int lsub_cfg0_cap(struct ub_entity_cfg_info *info, uint32_t cap_id)
     static struct ub_cfg_cap_cat cfg0_cap_array[] = {
         {CFG0_SHP_CAP_ID,        cfg0_shp_cap},
         {CFG0_ERR_RECORD_CAP_ID, cfg0_err_record_cap},
+        {CFG0_ERR_INFO_CAP_ID,   cfg0_err_info_cap},
+        {CFG0_EMQ_CAP_ID,        cfg0_emq_cap},
         {CFG_INVALID_CAP_ID,    NULL}
     };
     struct ub_cfg_cap_cat *cur;
@@ -52,7 +54,7 @@ int lsub_cfg0_cap(struct ub_entity_cfg_info *info, uint32_t cap_id)
     int i;
     int ret_code;
 
-    if ((cap_id == 0) || (cap_id > CFG0_ERR_RECORD_CAP_ID)) {
+    if ((cap_id == 0) || (cap_id > CFG0_EMQ_CAP_ID)) {
         return 0;
     }
 

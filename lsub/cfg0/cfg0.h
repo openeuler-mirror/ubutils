@@ -16,5 +16,7 @@ extern struct ub_entity_cfg_info *cfg0_info;
 
 void cfg0_shp_cap(uint8_t *data, uint32_t data_len);
 void cfg0_err_record_cap(uint8_t *data, uint32_t data_len);
+void cfg0_err_info_cap(uint8_t *data, uint32_t data_len);
+void cfg0_emq_cap(uint8_t *data, uint32_t data_len);
 
 #endif

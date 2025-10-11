@@ -258,6 +258,9 @@ static int check_ls_cmd(struct ub_access *uacc, int ls_type)
         /* If no slice is selected, the default slice is CFG0 and CFG1 BASIC. */
         if (slice_num == 0) {
             ls_cmd.cfg0_slice[0] = 1;
+            ls_cmd.cfg0_slice[CFG0_ERR_RECORD_CAP_ID] = 1;
+            ls_cmd.cfg0_slice[CFG0_ERR_INFO_CAP_ID] = 1;
+            ls_cmd.cfg0_slice[CFG0_EMQ_CAP_ID] = 1;
         }
     } else if (ls_type == LS_HEX) {
         if (slice_num != 1) {
