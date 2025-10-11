@@ -19,6 +19,7 @@
 #define LS_MAX_SLICE            8
 #define INVLID_EID_MSG          "Invalid EID"
 #define INVLID_CNA_MSG          "Invalid CNA"
+#define INVLID_PORT_MSG         "Invalid PORT"
 #define INVALID_VERBOSE_MSG     "Invalid verbose"
 #define TOO_MANY_SLICE_MSG      "Too many slices, only 8 of them"
 #define DECIMAL_NUM             10
@@ -46,6 +47,7 @@ static char help_info[] =
 "Selection of entities and so on:\n"
 "-e <entity_num>\tDisplay the entity with the specified entity number,\n"
 "\t\tentity number is simplified numbering of ub entity in the ubus driver\n"
+"-p <port>\tDisplay the entity with the specified entity number and the specified entity port\n"
 "-E <eid>\tDisplay the bus instance with the specified EID\n"
 "-r <cna>\tShow UB entity route table in specified CNA\n"
 "-s [[<cfg0|cfg1|port>:]<slice>][,[<slice>]]\tDisplay informations about specified slices\n"
@@ -134,14 +136,33 @@ static const char *parse_cna(char *str)
     return NULL;
 }
 
+static const char *parse_port(char *str)
+{
+    uint32_t port;
+
+    if (parse_x32(str, &port) <= 0) {
+        return INVLID_PORT_MSG;
+    }
+
+    if (port > MAX_PORT) {
+        return INVLID_PORT_MSG;
+    }
+
+    ls_cmd.port = port;
+    return NULL;
+}
+
 static uint8_t *parse_slice_prefix(struct lsub_cmd_param *cmd, char *str)
 {
 #define CFG0_PREFIX_STRING      "cfg0"
 #define CFG1_PREFIX_STRING      "cfg1"
+#define PORT_PREFIX_STRING      "port"
     if (strcasecmp(str, CFG0_PREFIX_STRING) == 0) {
         return cmd->cfg0_slice;
     } else if (strcasecmp(str, CFG1_PREFIX_STRING) == 0) {
         return cmd->cfg1_slice;
+    } else if (strcasecmp(str, PORT_PREFIX_STRING) == 0) {
+        return cmd->port_slice;
     } else {
         return NULL;
     }
@@ -210,9 +231,13 @@ static int calc_slice_cnt(struct lsub_cmd_param *cmd)
         if (cmd->cfg1_slice[i] == 1) {
             cmd->cfg1_slice_count++;
         }
+        if (cmd->port_slice[i] == 1) {
+            cmd->port_slice_count++;
+        }
     }
 
-    slice_num = cmd->cfg0_slice_count + cmd->cfg1_slice_count;
+    slice_num = cmd->cfg0_slice_count + cmd->cfg1_slice_count +
+                cmd->port_slice_count;
 
     return slice_num;
 }
@@ -259,7 +284,8 @@ static int check_ls_cmd(struct ub_access *uacc, int ls_type)
     cfg_info.uent = uent;
     cfg_info.port_num = CFG_INVALID_PORT_NUM;
 
-    slice_num = ls_cmd.cfg0_slice_count + ls_cmd.cfg1_slice_count;
+    slice_num = ls_cmd.cfg0_slice_count + ls_cmd.cfg1_slice_count +
+                ls_cmd.port_slice_count;
     if (ls_type == LS_VERBOSE) {
         /* If no slice is selected, the default slice is CFG0 and CFG1 BASIC. */
         if (slice_num == 0) {
@@ -274,6 +300,15 @@ static int check_ls_cmd(struct ub_access *uacc, int ls_type)
             fprintf(stderr, "You need to select one slice.\n");
             return -EINVAL;
         }
+    }
+
+    if (ls_cmd.port == INVALID_PORT && ls_cmd.port_slice_count != 0) {
+        fprintf(stderr, "No port is selected.\n");
+        return -EINVAL;
+    }
+
+    if (ls_cmd.port != INVALID_PORT && port_check_id(uent, ls_cmd.port) == 0) {
+        return -EINVAL;
     }
 
     return 0;
@@ -294,6 +329,10 @@ static void show_slice(struct lsub_cmd_param *cmd, struct ub_entity_cfg_info *in
         ls_data = cmd->cfg1_slice;
         ls_basic = lsub_cfg1_basic;
         ls_cap = lsub_cfg1_cap;
+    } else if (type == PORT_SLICE_TYPE) {
+        info->port = cmd->port;
+        ls_data = cmd->port_slice;
+        ls_basic = lsub_port_basic;
     } else {
         return;
     }
@@ -327,6 +366,7 @@ static void show_verbose(struct ub_access *uacc)
 
     show_slice(&ls_cmd, &cfg_info, CFG0_SLICE_TYPE);
     show_slice(&ls_cmd, &cfg_info, CFG1_SLICE_TYPE);
+    show_slice(&ls_cmd, &cfg_info, PORT_SLICE_TYPE);
     printf("\n");
 }
 
@@ -377,6 +417,18 @@ static int cmd_option_entity_name(struct ub_access *uacc)
 
     uacc->debug("cmd_option_entity_name\n");
     if ((err_msg = parse_entity(optarg))) {
+        (void)printf("%s\n", err_msg);
+        return -EINVAL;
+    }
+    return 0;
+}
+
+static int cmd_option_port(struct ub_access *uacc)
+{
+    const char *err_msg;
+
+    uacc->debug("cmd_option_port\n");
+    if ((err_msg = parse_port(optarg))) {
         (void)printf("%s\n", err_msg);
         return -EINVAL;
     }
@@ -464,6 +516,7 @@ static struct cmd_option cmd_options[] = {
     { 'n', cmd_option_numeric },
     { 'i', cmd_option_ids },
     { 'e', cmd_option_entity_name },
+    { 'p', cmd_option_port },
     { 's', cmd_option_slice },
     { 'v', cmd_option_verbose },
     { 'r', cmd_option_routetbl },
@@ -495,6 +548,7 @@ int main(int argc, char **argv)
     int opt, ret;
     size_t i;
 
+    ls_cmd.port = INVALID_PORT;
     /* 2 argc means help or version cmd */
     if (argc == 2 && !strcmp(argv[1], "--version")) {
         puts("lsub version " UBUTILS_VERSION);

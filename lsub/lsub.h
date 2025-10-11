@@ -66,6 +66,7 @@ struct ub_bus_controller {
   */
 #define CFG0_SLICE_ADDR(i)      ((0x100 * (i)) * CFG_DWORD_LEN)
 #define CFG1_SLICE_ADDR(i)      ((0x10000 + 0x100 * (i)) * CFG_DWORD_LEN)
+#define PORT_SLICE_ADDR(i, j)   ((0x10000 * ((i) + 2) + 0x100 * (j)) * CFG_DWORD_LEN)
 #define ROUTE_TBL_SLICE         (0xF0000000ULL * CFG_DWORD_LEN)
 
 /* cfg0 */
@@ -117,6 +118,13 @@ struct ub_bus_controller {
 #define CFG1_INT_TYPE2_CAP_ID   0x4
 #define CFG1_UB_MEM_CAP_ID      0x6
 
+/* port */
+#define PORT_BASIC_CAP_BITMAP   (0x1 * CFG_DWORD_LEN)
+#define PORT_BASIC_INFO         (0x9 * CFG_DWORD_LEN)
+#define PORT_BASIC_NB_INFO      (0xA * CFG_DWORD_LEN)
+#define PORT_BASIC_CNA          (0xF * CFG_DWORD_LEN)
+#define PORT_BASIC_RST          (0x10 * CFG_DWORD_LEN) /* Rort Reset Attribute is WC */
+
 /* route table */
 #define ROUTE_TBL_NUM_OF_TLB_ENTRY          (0x1 * CFG_DWORD_LEN)
 #define ROUTE_TBL_EXACT_ROUTE_SUP           (0x1 * CFG_DWORD_LEN + 2)
@@ -147,7 +155,8 @@ struct ub_bus_controller {
 
 enum {
     CFG0_SLICE_TYPE = 0,
-    CFG1_SLICE_TYPE
+    CFG1_SLICE_TYPE,
+    PORT_SLICE_TYPE
 };
 
 struct ub_cfg_basic_cat {
@@ -165,12 +174,15 @@ struct ub_entity_cfg_info {
     struct ub_entity *uent;
     /* port number */
     uint16_t port_num;
+    /* selected port */
+    uint32_t port;
     /* entity number */
     uint16_t entity_num;
     uint8_t cfg0_cap_bits[CFG_CAP_BITMAP_LEN];
     uint8_t cfg0_sup_feat[CFG_SUP_FEATURE_LEN];
     uint8_t cfg1_cap_bits[CFG_CAP_BITMAP_LEN];
     uint8_t cfg1_sup_feat[CFG_SUP_FEATURE_LEN];
+    uint8_t port_cap_bits[CFG_CAP_BITMAP_LEN];
     uint8_t data_buf[CFG_SLICE_LEN];
     char display_buf[CFG_DISPLAY_BUF_LEN];
 };
@@ -359,6 +371,8 @@ int cfg0_check_capid(struct ub_entity_cfg_info *info, uint32_t cap_id);
 int lsub_cfg1_basic(struct ub_entity_cfg_info *info);
 int lsub_cfg1_cap(struct ub_entity_cfg_info *info, uint32_t cap_id);
 int cfg1_check_capid(struct ub_entity_cfg_info *info, uint32_t cap_id);
+int port_check_id(struct ub_entity *uent, uint32_t port_id);
+int lsub_port_basic(struct ub_entity_cfg_info *info);
 void ub_set_ids_file_path(struct ub_access *uacc, char *name, int to_be_freed);
 char *ub_lookup_name(struct ub_access *uacc, char *buf, size_t size,
                      uint32_t vendor_id, uint32_t device_id , uint32_t class_id);

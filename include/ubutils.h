@@ -28,6 +28,8 @@
 #define UB_HOST_DEV_PARENT 0xFFFFFFFE
 #define MAX_UENT_NUM 0xFFFFF
 #define MAX_CNA 0xFFFF
+#define MAX_PORT 0xFFD /* The actual number of ports supported by the configuration space */
+#define INVALID_PORT (MAX_PORT + 1)
 #define MAX_POSITION 0x3FFFFFFFFULL
 #define UB_GUID_MAXLEN 128
 #define UB_INSTANCE_MAXLEN UB_GUID_MAXLEN
@@ -35,7 +37,7 @@
 #define MAX_DRIVER_NAME_LEN 256
 
 #define UB_PRINTF(x, y) __attribute__((format(printf, x, y)))
-#define LSUB_OPTIONS "htlni:kbE:r:e:s:v"
+#define LSUB_OPTIONS "htlni:kbE:r:e:s:vp:"
 #define SETUB_OPTIONS "hs:b:g:d:e:u:"
 #define HASH_SIZE 4099
 #define HEX 16
@@ -184,13 +186,17 @@ struct lsub_cmd_param {
     uint32_t uent_num;
     /* selected CNA */
     uint32_t cna;
+    /* selected port */
+    uint32_t port;
     /* busInstance eid */
     uint32_t bi_eid;
     /* selected items */
     uint8_t cfg0_slice[MAX_SLICE];
     uint8_t cfg1_slice[MAX_SLICE];
+    uint8_t port_slice[MAX_SLICE];
     uint8_t cfg0_slice_count;
     uint8_t cfg1_slice_count;
+    uint8_t port_slice_count;
 };
 
 struct ub_guid {
