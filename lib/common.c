@@ -128,6 +128,25 @@ int parse_x16(char *c, unsigned short *resp)
     }
 }
 
+struct ub_port *ub_get_port_by_port_num(struct ub_entity *uent, uint32_t port_num)
+{
+    struct ub_port *port;
+
+    if (!uent || !uent->route_tb) {
+        return NULL;
+    }
+
+    port = uent->route_tb->port_ls;
+    while (port) {
+        if (port->port_num == port_num) {
+            return port;
+        }
+        port = port->next;
+    }
+
+    return NULL;
+}
+
 struct ub_entity *ub_get_uent_by_uent_num(struct ub_access *uacc, uint32_t uent_num)
 {
     struct ub_entity *uent = uacc->uents;
@@ -174,6 +193,16 @@ struct ub_entity *ub_alloc_uent(struct ub_access *uacc)
         return NULL;
     }
 
+    route_tb = (struct ub_route_tb *)malloc(sizeof(struct ub_route_tb));
+    if (!route_tb) {
+        uacc->error("route tb alloc failed.\n");
+        free(uent);
+        return NULL;
+    }
+    route_tb->port_ls = NULL;
+    route_tb->entity = NULL;
+    uent->route_tb = route_tb;
+
     uent->access = uacc;
     uent->methods = uacc->methods;
     if (uent->methods->init_dev) {
@@ -181,6 +210,37 @@ struct ub_entity *ub_alloc_uent(struct ub_access *uacc)
     }
 
     return uent;
+}
+
+int ub_alloc_port(struct ub_entity *uent, uint32_t loc_port_num,
+                  uint32_t link_name, uint32_t link_port_num)
+{
+    struct ub_access *uacc = uent->access;
+    struct ub_route_tb *route_tb = uent->route_tb;
+    struct ub_port *port;
+
+    if (route_tb == NULL) {
+        uacc->error("uent route table not found.\n");
+        return -ENOMEM;
+    }
+
+    port = (struct ub_port *)malloc(sizeof(struct ub_port));
+    if (!port) {
+        uacc->error("port alloc failed.\n");
+        return -ENOMEM;
+    }
+    port->port_num = loc_port_num;
+    port->link_port =
+        ub_get_port_by_port_num((struct ub_entity *)ub_get_uent_by_uent_num(uacc, link_name),
+                                link_port_num);
+    if (port->link_port) { /* Establish a bidirectional connection */
+        port->link_port->link_port = port;
+    }
+    port->uent = uent;
+    port->next = route_tb->port_ls;
+    route_tb->port_ls = port;
+
+    return 0;
 }
 
 int ub_fill_uent_info(struct ub_entity *uent)

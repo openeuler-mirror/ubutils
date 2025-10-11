@@ -21,13 +21,16 @@
 #define UB_UNIFIED_BUS "/dev/unified_bus"
 #define UB_CLUSTER "/sys/bus/ub/cluster"
 #define UB_PATH_SYS_BUS_UB "/sys/bus/ub"
+#define UB_PATH_DIRECT_LINK "direct_link"
 #define UB_PATH_MUE_LIST "mue_list"
 #define UB_PATH_UE_LIST "ue_list"
+#define UB_INIT_PARENT 0xFFFFFFFF
+#define UB_HOST_DEV_PARENT 0xFFFFFFFE
 #define MAX_UENT_NUM 0xFFFFF
 #define MAX_POSITION 0x3FFFFFFFFULL
 
 #define UB_PRINTF(x, y) __attribute__((format(printf, x, y)))
-#define LSUB_OPTIONS "hl"
+#define LSUB_OPTIONS "hlt"
 #define SETUB_OPTIONS "hs:b:g:d:e:u:"
 #define HASH_SIZE 4099
 #define HEX 16
@@ -63,6 +66,8 @@ struct ub_entity {
     uint32_t vendor_id;
     uint16_t device_id;
     uint32_t class_code; /* UB entity class code */
+    uint8_t entity_type; /* UB entity type */
+    uint32_t ubc_uent_num;
     uint32_t entity_idx;
     uint32_t uent_num;
     uint32_t primary_entity;
@@ -71,6 +76,10 @@ struct ub_entity {
     /* Fields for tool usage */
     struct ub_access *access;
     struct ub_methods *methods;
+    struct ub_route_tb *route_tb;
+    uint32_t par_uent_num; /* parent dev's uent number */
+    uint32_t scaned; /* topo show scaned */
+    uint32_t printed; /* topo show printed */
 };
 
 /* Options you can change */
@@ -116,10 +125,34 @@ struct ub_param {
     char *help; /* Explanation of the parameter */
 };
 
+struct ub_route_tb_entity {
+    struct ub_route_tb_entity *next;
+};
+
+struct ub_port {
+    uint32_t port_num;
+    struct ub_entity *uent;
+    struct ub_port *next;
+    struct ub_port *link_port;
+};
+
+struct ub_route_tb {
+    struct ub_port *port_ls;
+    struct ub_route_tb_entity *entity;
+};
+
 enum ub_access_type {
     /* Known access methods, remember to update access.c as well */
     UB_ACCESS_SYS_BUS_UB, /* Linux /sys/bus/ub */
     UB_ACCESS_MAX
+};
+
+enum {
+    UB_HEADER_TYPE_BUS_INSTANCE = 0,
+    UB_HEADER_TYPE_INDEPENDENT_UB_CONTROLLER = 1,
+    UB_HEADER_TYPE_INTEGRATED_UB_CONTROLLER = 2,
+    UB_HEADER_TYPE_INDEPENDENT_UB_SWITCH = 3,
+    UB_HEADER_TYPE_INTEGRATED_UB_SWITCH = 4,
 };
 
 struct lsub_cmd_param {
@@ -158,8 +191,14 @@ struct ub_bi_para {
 };
 
 struct ub_access *ub_alloc_acc(void);
+int ub_alloc_port(struct ub_entity *uent, uint32_t loc_port_num,
+                  uint32_t link_name, uint32_t link_port_num);
 struct ub_entity *ub_alloc_uent(struct ub_access *uacc);
+struct ub_port *ub_get_port_by_port_num(struct ub_entity *uent, uint32_t port_num);
 struct ub_entity *ub_get_uent_by_uent_num(struct ub_access *uacc, uint32_t uent_num);
+int sysfs_get_direct_link(struct ub_entity *uent);
+void show_topo(void);
+void ub_free_ubc(void);
 int ub_sel_access_methods(struct ub_access *uacc);
 int ub_init(struct ub_access *uacc);
 struct device *ub_scan_one_device(struct ub_entity *uent);

@@ -168,6 +168,40 @@ void sysfs_get_ue_list(struct ub_entity *uent, uint8_t level)
     (void)fclose(file);
 }
 
+int sysfs_get_direct_link(struct ub_entity *uent)
+{
+    uint32_t loc_port_num, link_port_num, link_uent_num;
+    struct ub_access *uacc = uent->access;
+    char namebuf[OBJNAMELEN] = {0}, buf[256]; /* 256 for len of resource line */
+    FILE *file;
+    int i, ret = 0;
+
+    sysfs_obj_name(uent, UB_PATH_DIRECT_LINK, namebuf);
+    file = fopen(namebuf, "r");
+    if (!file) {
+        uacc->error("Cannot open %s: %s", namebuf, strerror(errno));
+        return -ENOENT;
+    }
+
+    for (i = 0; 1; i++) {
+        if (!fgets(buf, sizeof(buf), file)) {
+            break;
+        }
+        if (sscanf(buf, "0x%03x : 0x%03x [0x%05x]", &loc_port_num,
+            &link_port_num, &link_uent_num) != 3) { /* 3 fields */
+            uacc->error("Syntax error in %s", namebuf);
+            continue;
+        }
+        ret = ub_alloc_port(uent, loc_port_num, link_uent_num, link_port_num);
+        if (ret) {
+            break;
+        }
+    }
+    (void)fclose(file);
+
+    return ret;
+}
+
 static int sysfs_get_string(struct ub_entity *uent, const char *object, char *buf, int mandatory)
 {
     struct ub_access *uacc = uent->access;
@@ -227,6 +261,10 @@ static void sysfs_ub_cleanup(struct ub_access *uacc)
 static int ub_scan_attr_cfg(struct ub_entity *uent, uint32_t uent_num)
 {
     uent->uent_num = uent_num;
+    uent->par_uent_num = UB_INIT_PARENT;
+
+    uent->entity_type = (uint8_t)sysfs_get_value(uent, "type", 1);
+    uent->ubc_uent_num = sysfs_get_value(uent, "ubc", 1);
     uent->vendor_id = sysfs_get_value(uent, "vendor", 1);
     uent->device_id = (uint16_t)sysfs_get_value(uent, "device", 1);
     uent->class_code = sysfs_get_value(uent, "class_code", 1);
@@ -424,10 +462,37 @@ static int sysfs_ub_write(struct ub_entity *uent, uint64_t pos, uint8_t *buf, in
     return 0;
 }
 
+static void free_route_port(struct ub_route_tb *route_tb)
+{
+    struct ub_port *port, *tmp_port;
+
+    for (port = route_tb->port_ls; port; port = tmp_port) {
+        tmp_port = port->next;
+        free(port);
+    }
+}
+
+static void free_route_entity(struct ub_route_tb *route_tb)
+{
+    struct ub_route_tb_entity *entity, *tmp_entity;
+
+    for (entity = route_tb->entity; entity; entity = tmp_entity) {
+        tmp_entity = entity->next;
+        free(entity);
+    }
+}
+
 static void sysfs_ub_cleanup_dev(struct ub_entity *uent)
 {
     if (!uent) {
         return;
+    }
+
+    if (uent->route_tb) {
+        free_route_port(uent->route_tb);
+        free_route_entity(uent->route_tb);
+        free(uent->route_tb);
+        uent->route_tb = NULL;
     }
 }
 

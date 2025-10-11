@@ -21,10 +21,12 @@ struct cmd_option {
     int (*execute_func)(struct ub_access *uacc);
 };
 
+static int g_opt_topo;
 static struct lsub_cmd_param ls_cmd;
 
 static char help_info[] =
 "Usage: lsub [<switches>]\n"
+"-t\t\tShow UB entity topo\n"
 "-l\t\tShow UB entity list\n";
 
 static void show_list(struct ub_access *uacc, uint32_t uent_num)
@@ -84,6 +86,13 @@ static int cmd_option_help(struct ub_access *uacc)
     return 0;
 }
 
+static int cmd_option_topo(struct ub_access *uacc)
+{
+    uacc->debug("g_opt_topo enable\n");
+    g_opt_topo = 1;
+    return 0;
+}
+
 static int cmd_option_mue_ue_list(struct ub_access *uacc)
 {
     uacc->debug("mue_ue_flag enable\n");
@@ -93,12 +102,15 @@ static int cmd_option_mue_ue_list(struct ub_access *uacc)
 
 static struct cmd_option cmd_options[] = {
     { 'h', cmd_option_help },
+    { 't', cmd_option_topo },
     { 'l', cmd_option_mue_ue_list },
 };
 
 static void cmd_option_further_proc(struct ub_access *uacc)
 {
-    if (mue_ue_flag) {
+    if (g_opt_topo) {
+        show_topo();
+    } else if (mue_ue_flag) {
         show_mue_ue_list(uacc, ls_cmd.uent_num);
     } else if (list_show_flag) {
         show_list(uacc, ls_cmd.uent_num);
@@ -157,6 +169,9 @@ int main(int argc, char **argv)
 
 err_ub_cleanup:
     ub_cleanup(uacc);
+
+    /* Free all UB Bus Controller */
+    ub_free_ubc();
 
     return ret;
 }
