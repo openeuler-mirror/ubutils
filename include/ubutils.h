@@ -21,11 +21,13 @@
 #define UB_UNIFIED_BUS "/dev/unified_bus"
 #define UB_CLUSTER "/sys/bus/ub/cluster"
 #define UB_PATH_SYS_BUS_UB "/sys/bus/ub"
+#define UB_PATH_MUE_LIST "mue_list"
+#define UB_PATH_UE_LIST "ue_list"
 #define MAX_UENT_NUM 0xFFFFF
 #define MAX_POSITION 0x3FFFFFFFFULL
 
 #define UB_PRINTF(x, y) __attribute__((format(printf, x, y)))
-#define LSUB_OPTIONS "h"
+#define LSUB_OPTIONS "hl"
 #define SETUB_OPTIONS "hs:b:g:d:e:u:"
 #define HASH_SIZE 4099
 #define HEX 16
@@ -61,7 +63,10 @@ struct ub_entity {
     uint32_t vendor_id;
     uint16_t device_id;
     uint32_t class_code; /* UB entity class code */
+    uint32_t entity_idx;
     uint32_t uent_num;
+    uint32_t primary_entity;
+    uint8_t is_mue;
 
     /* Fields for tool usage */
     struct ub_access *access;
@@ -154,6 +159,7 @@ struct ub_bi_para {
 
 struct ub_access *ub_alloc_acc(void);
 struct ub_entity *ub_alloc_uent(struct ub_access *uacc);
+struct ub_entity *ub_get_uent_by_uent_num(struct ub_access *uacc, uint32_t uent_num);
 int ub_sel_access_methods(struct ub_access *uacc);
 int ub_init(struct ub_access *uacc);
 struct device *ub_scan_one_device(struct ub_entity *uent);
@@ -166,6 +172,9 @@ int ub_fill_uent_info(struct ub_entity *uent);
 int parse_x64(char *c, unsigned long long int *resp);
 int parse_x32(char *c, unsigned int *resp);
 int parse_x16(char *c, unsigned short *resp);
+void sysfs_get_if_mue(struct ub_entity *uent);
+void sysfs_get_mue_list(struct ub_entity *uent);
+void sysfs_get_ue_list(struct ub_entity *uent, uint8_t level);
 
 extern struct ub_methods linux_sysfs;
 

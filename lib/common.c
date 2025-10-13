@@ -128,6 +128,20 @@ int parse_x16(char *c, unsigned short *resp)
     }
 }
 
+struct ub_entity *ub_get_uent_by_uent_num(struct ub_access *uacc, uint32_t uent_num)
+{
+    struct ub_entity *uent = uacc->uents;
+
+    while (uent) {
+        if (uent->uent_num == uent_num) {
+            return uent;
+        }
+        uent = uent->next;
+    }
+
+    return NULL;
+}
+
 struct ub_access *ub_alloc_acc(void)
 {
     struct ub_access *uacc;

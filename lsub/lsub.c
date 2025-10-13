@@ -24,7 +24,8 @@ struct cmd_option {
 static struct lsub_cmd_param ls_cmd;
 
 static char help_info[] =
-"Usage: lsub [<switches>]\n";
+"Usage: lsub [<switches>]\n"
+"-l\t\tShow UB entity list\n";
 
 static void show_list(struct ub_access *uacc, uint32_t uent_num)
 {
@@ -41,7 +42,39 @@ static void show_list(struct ub_access *uacc, uint32_t uent_num)
     }
 }
 
+static void show_mue_ue_list(struct ub_access *uacc, uint32_t uent_num)
+{
+    struct ub_entity *uent;
+
+    for (uent = uacc->uents; uent; uent = uent->next) {
+        /* The specified uent needs to be displayed, but the uent is not matched */
+        if (uent_num != 0 && uent->uent_num != uent_num) {
+            continue;
+        }
+
+        /* All uents need to be listed, but the uent is not UBE0. */
+        if (uent_num == 0 && uent->entity_idx != 0) {
+            continue;
+        }
+
+        if (uent->entity_idx == 0) {
+            printf("primary/mue[UBE0] <%05x>\n", uent->uent_num);
+            sysfs_get_mue_list(uent);
+            sysfs_get_ue_list(uent, 0);
+        } else if (uent == ub_get_uent_by_uent_num(uacc, uent->primary_entity)) {
+            printf("pool entity[UBE%u] <%05x>\n", uent->entity_idx, uent->uent_num);
+        } else if (uent->is_mue) {
+            printf("mue[UBE%u] <%05x>, primary is <%05x>\n",
+                   uent->entity_idx, uent->uent_num, uent->primary_entity);
+        } else {
+            printf("ue[UBE%u] <%05x>, primary is <%05x>\n",
+                   uent->entity_idx, uent->uent_num, uent->primary_entity);
+        }
+    }
+}
+
 static int list_show_flag;
+static int mue_ue_flag;
 
 static int cmd_option_help(struct ub_access *uacc)
 {
@@ -51,13 +84,23 @@ static int cmd_option_help(struct ub_access *uacc)
     return 0;
 }
 
+static int cmd_option_mue_ue_list(struct ub_access *uacc)
+{
+    uacc->debug("mue_ue_flag enable\n");
+    mue_ue_flag = 1;
+    return 0;
+}
+
 static struct cmd_option cmd_options[] = {
     { 'h', cmd_option_help },
+    { 'l', cmd_option_mue_ue_list },
 };
 
 static void cmd_option_further_proc(struct ub_access *uacc)
 {
-    if (list_show_flag) {
+    if (mue_ue_flag) {
+        show_mue_ue_list(uacc, ls_cmd.uent_num);
+    } else if (list_show_flag) {
         show_list(uacc, ls_cmd.uent_num);
     }
 }

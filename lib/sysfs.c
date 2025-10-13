@@ -86,6 +86,88 @@ static void sysfs_obj_name(struct ub_entity *uent, const char *object, char *buf
     }
 }
 
+void sysfs_get_if_mue(struct ub_entity *uent)
+{
+    char namebuf[OBJNAMELEN];
+
+    sysfs_obj_name(uent, UB_PATH_UE_LIST, namebuf);
+    if (access(namebuf, R_OK)) {
+        uent->is_mue = 0;
+    } else {
+        uent->is_mue = 1;
+    }
+}
+
+void sysfs_get_mue_list(struct ub_entity *uent)
+{
+    char namebuf[OBJNAMELEN], buf[256]; /* 256 for len of list line */
+    struct ub_access *uacc = uent->access;
+    struct ub_entity *uent_i;
+    uint32_t mue_uent_num;
+    FILE *file;
+
+    sysfs_obj_name(uent, UB_PATH_MUE_LIST, namebuf);
+    file = fopen(namebuf, "r");
+    if (file == NULL) {
+        return;
+    }
+
+    while (fgets(buf, (int)sizeof(buf), file)) {
+        if (sscanf(buf, "%05x", &mue_uent_num) != 1) { /* 1 fields */
+            uacc->error("Syntax error in %s", namebuf);
+            continue;
+        }
+
+        uent_i = ub_get_uent_by_uent_num(uacc, mue_uent_num);
+        if (!uent_i) {
+            (void)fclose(file);
+            return;
+        }
+
+        printf("\tUBE%u's mue[UBE%u]: <%05x>\n",
+               uent->entity_idx, uent_i->entity_idx, mue_uent_num);
+        sysfs_get_ue_list(uent_i, 1);
+    }
+    (void)fclose(file);
+}
+
+void sysfs_get_ue_list(struct ub_entity *uent, uint8_t level)
+{
+    char namebuf[OBJNAMELEN], buf[256]; /* 256 for len of list line */
+    struct ub_access *uacc = uent->access;
+    char tab_str[] = "\t\t";
+    struct ub_entity *uent_i;
+    uint32_t ue_uent_num;
+    FILE *file;
+
+    sysfs_obj_name(uent, UB_PATH_UE_LIST, namebuf);
+    file = fopen(namebuf, "r");
+    if (file == NULL) {
+        return;
+    }
+
+    if (level == 0) {
+        tab_str[1] = '\0';
+    }
+
+    while (fgets(buf, (int)sizeof(buf), file)) {
+        if (sscanf(buf, "%05x", &ue_uent_num) != 1) { /* 1 fields */
+            uacc->error("Syntax error in %s", namebuf);
+            continue;
+        }
+
+        uent_i = ub_get_uent_by_uent_num(uacc, ue_uent_num);
+        if (!uent_i) {
+            (void)fclose(file);
+            return;
+        }
+
+        printf("%sUBE%u's ue[UBE%u]: <%05x>\n",
+               tab_str, uent->entity_idx, uent_i->entity_idx, ue_uent_num);
+    }
+    (void)fclose(file);
+}
+
 static int sysfs_get_string(struct ub_entity *uent, const char *object, char *buf, int mandatory)
 {
     struct ub_access *uacc = uent->access;
@@ -148,6 +230,9 @@ static int ub_scan_attr_cfg(struct ub_entity *uent, uint32_t uent_num)
     uent->vendor_id = sysfs_get_value(uent, "vendor", 1);
     uent->device_id = (uint16_t)sysfs_get_value(uent, "device", 1);
     uent->class_code = sysfs_get_value(uent, "class_code", 1);
+    uent->entity_idx = sysfs_get_value(uent, "entity_idx", 1);
+    uent->primary_entity = sysfs_get_value(uent, "primary_entity", 1);
+    sysfs_get_if_mue(uent);
     ub_link_dev(uent->access, uent); /* link uent in uacc */
 
     return 0;
