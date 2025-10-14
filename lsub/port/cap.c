@@ -53,6 +53,8 @@ static struct ub_cfg_cap_cat port_cap_array[] = {
     { PORT_CAP12_DATA_RATE9, port_capx_data_rate },
     { PORT_CAP14_EYE_MONITOR, port_cap14_eye_monitor },
     { PORT_CAP15_QDLWS, port_cap15_qdlws },
+    { PORT_CAP20_LMSM_ST, port_cap20_lmsm_st },
+    { PORT_CAP21_PORT_ERR_RECORD, port_cap21_err_record },
     { CFG_INVALID_CAP_ID, NULL }
 };
 

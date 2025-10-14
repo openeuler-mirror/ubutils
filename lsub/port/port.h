@@ -34,4 +34,6 @@ void port_cap2_link_log(uint8_t *data, uint32_t data_len);
 void port_capx_data_rate(uint8_t *data, uint32_t data_len);
 void port_cap14_eye_monitor(uint8_t *data, uint32_t data_len);
 void port_cap15_qdlws(uint8_t *data, uint32_t data_len);
+void port_cap20_lmsm_st(uint8_t *data, uint32_t data_len);
+void port_cap21_err_record(uint8_t *data, uint32_t data_len);
 #endif

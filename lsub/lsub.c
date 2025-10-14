@@ -202,6 +202,11 @@ static int parse_slice_context(struct lsub_cmd_param *cmd, char *cfg_str)
     /* If no slice is selected, the default slice is CFG0\CFG1\PORT BASIC. */
     if (save_str[0] == '\0') {
         cfg_id[0] = 1;
+        if (strcasecmp(tmp_str, PORT_PREFIX_STRING) == 0) {
+        cfg_id[PORT_CAP1_LINK] = 1;
+        cfg_id[PORT_CAP2_LINK_LOG] = 1;
+        cfg_id[PORT_CAP21_PORT_ERR_RECORD] = 1;
+        }
         return 0;
     }
 
