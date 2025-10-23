@@ -303,6 +303,25 @@ static void ub_free_params(struct ub_access *uacc)
     }
 }
 
+static void ub_free_ids_hash(struct ub_access *uacc)
+{
+    struct id_entry *n;
+    int i;
+
+    if (!uacc->id_hash)
+        return;
+
+    for (i = 0; i < HASH_SIZE; i++) {
+        while (uacc->id_hash[i]) {
+            n = uacc->id_hash[i];
+            uacc->id_hash[i] = n->next;
+            free(n);
+        }
+    }
+    free(uacc->id_hash);
+    uacc->id_hash = NULL;
+}
+
 void ub_cleanup(struct ub_access *uacc)
 {
     struct ub_entity *uent, *next_uent;
@@ -315,6 +334,7 @@ void ub_cleanup(struct ub_access *uacc)
     if (uacc->methods && uacc->methods->cleanup) {
         uacc->methods->cleanup(uacc);
     }
+    ub_free_ids_hash(uacc);
     ub_free_params(uacc);
     free(uacc);
 

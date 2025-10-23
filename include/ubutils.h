@@ -13,7 +13,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define UBUTILS_VERSION "1.0.0"
 #define UB_SYS_DIR_LEN 1024
+#define OBJBUFSIZE 1024
 #define OBJNAMELEN 1024
 #define UB_CONFIG_SIZE 1024
 #define UB_UNIFIED_BUS "/dev/unified_bus"
@@ -23,8 +25,20 @@
 #define MAX_POSITION 0x3FFFFFFFFULL
 
 #define UB_PRINTF(x, y) __attribute__((format(printf, x, y)))
+#define LSUB_OPTIONS "h"
 #define SETUB_OPTIONS "hs:b:g:d:e:u:"
+#define HASH_SIZE 4099
 #define HEX 16
+
+struct id_entry {
+    struct id_entry *next;
+    uint32_t id12;
+    uint32_t id34;
+    uint32_t id56;
+    uint8_t cat;
+    uint8_t src;
+    char name[1];
+};
 
 struct option {
     uint32_t uent_num;
@@ -44,6 +58,9 @@ struct ub_entity {
     struct ub_entity *next; /* Next uent in the chain */
 
     /* These fields are define by specification */
+    uint32_t vendor_id;
+    uint16_t device_id;
+    uint32_t class_code; /* UB entity class code */
     uint32_t uent_num;
 
     /* Fields for tool usage */
@@ -61,6 +78,7 @@ struct ub_access {
     struct ub_methods *methods;
     struct ub_param *params;
     int fd; /* sys: fd for config space */
+    struct id_entry **id_hash;
     char *id_file_name;
     int free_id_name;
 
@@ -97,6 +115,11 @@ enum ub_access_type {
     /* Known access methods, remember to update access.c as well */
     UB_ACCESS_SYS_BUS_UB, /* Linux /sys/bus/ub */
     UB_ACCESS_MAX
+};
+
+struct lsub_cmd_param {
+    /* selected uent number */
+    uint32_t uent_num;
 };
 
 struct ub_guid {

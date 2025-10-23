@@ -2,3 +2,4 @@
 # Copyright (c) 2025 HiSilicon Technologies Co., Ltd. All rights reserved.
 
 add_subdirectory(setub)
+add_subdirectory(lsub)

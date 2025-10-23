@@ -86,6 +86,43 @@ static void sysfs_obj_name(struct ub_entity *uent, const char *object, char *buf
     }
 }
 
+static int sysfs_get_string(struct ub_entity *uent, const char *object, char *buf, int mandatory)
+{
+    struct ub_access *uacc = uent->access;
+    void (*warn)(const char *msg, ...) = (mandatory ? uacc->error : uacc->warning);
+    char name[OBJNAMELEN] = {0};
+    long n;
+    int fd;
+
+    sysfs_obj_name(uent, object, name);
+    if ((fd = open(name, O_RDONLY)) < 0) {
+        if (mandatory || errno != ENOENT)
+            warn("Cannot open %s: %s", name, strerror(errno));
+        return 0;
+    }
+
+    if ((n = read(fd, buf, OBJBUFSIZE)) >= 0) {
+        buf[n] = '\0';
+        close(fd);
+        return 1;
+    }
+
+    warn("Error reading %s: %s", name, strerror(errno));
+    close(fd);
+    return 0;
+}
+
+static unsigned int sysfs_get_value(struct ub_entity *uent, const char *object, int mandatory)
+{
+    char buf[OBJBUFSIZE];
+
+    if (sysfs_get_string(uent, object, buf, mandatory)) {
+        return (unsigned int)strtol(buf, NULL, 0);
+    }
+
+    return (unsigned int)~0;
+}
+
 static void ub_link_dev(struct ub_access *uacc, struct ub_entity *uent)
 {
     uent->next = uacc->uents;
@@ -108,6 +145,9 @@ static void sysfs_ub_cleanup(struct ub_access *uacc)
 static int ub_scan_attr_cfg(struct ub_entity *uent, uint32_t uent_num)
 {
     uent->uent_num = uent_num;
+    uent->vendor_id = sysfs_get_value(uent, "vendor", 1);
+    uent->device_id = (uint16_t)sysfs_get_value(uent, "device", 1);
+    uent->class_code = sysfs_get_value(uent, "class_code", 1);
     ub_link_dev(uent->access, uent); /* link uent in uacc */
 
     return 0;
