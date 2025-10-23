@@ -35,10 +35,12 @@
 #define MAX_DRIVER_NAME_LEN 256
 
 #define UB_PRINTF(x, y) __attribute__((format(printf, x, y)))
-#define LSUB_OPTIONS "htlni:kbE:r:e:"
+#define LSUB_OPTIONS "htlni:kbE:r:e:s:v"
 #define SETUB_OPTIONS "hs:b:g:d:e:u:"
 #define HASH_SIZE 4099
 #define HEX 16
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
 
 struct id_entry {
     struct id_entry *next;
@@ -166,6 +168,9 @@ enum ub_access_type {
     UB_ACCESS_MAX
 };
 
+/* cfg0\cfg1\port has up to 256 slices */
+#define MAX_SLICE               256
+
 enum {
     UB_HEADER_TYPE_BUS_INSTANCE = 0,
     UB_HEADER_TYPE_INDEPENDENT_UB_CONTROLLER = 1,
@@ -181,6 +186,9 @@ struct lsub_cmd_param {
     uint32_t cna;
     /* busInstance eid */
     uint32_t bi_eid;
+    /* selected items */
+    uint8_t cfg0_slice[MAX_SLICE];
+    uint8_t cfg0_slice_count;
 };
 
 struct ub_guid {

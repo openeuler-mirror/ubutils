@@ -28,7 +28,10 @@ struct ub_bus_controller {
 };
 
 /* a word is 2 bytes (16 bits), a doubleword is 4 bytes (32 bits), and a quadword is 8 bytes (64 bits). */
+#define CFG_QWORD_LEN           0x8
 #define CFG_DWORD_LEN           0x4
+#define CFG_WORD_LEN            0x2
+#define CFG_BYTE_LEN            0x1
 
 /**
   * +------------+---------------+-----------------+
@@ -66,7 +69,21 @@ struct ub_bus_controller {
 
 /* cfg0 */
 #define CFG0_PORT_NUMBER        (0x1 * CFG_DWORD_LEN)
+#define CFG0_CAP_BITMAP         (0x2 * CFG_DWORD_LEN)
 #define CFG0_SUPPORT_FEATURE    (0xA * CFG_DWORD_LEN)
+#define CFG0_GUID               (0xE * CFG_DWORD_LEN)
+#define CFG0_EID                (0x12 * CFG_DWORD_LEN)
+#define CFG0_UBFM_EID           (0x16 * CFG_DWORD_LEN)
+#define CFG0_NET_ADDR           (0x1A * CFG_DWORD_LEN)
+#define CFG0_UPI                (0x1F * CFG_DWORD_LEN)
+#define CFG0_MODULE             (0x20 * CFG_DWORD_LEN)
+#define CFG0_DEV_RST            (0x21 * CFG_DWORD_LEN)
+#define CFG0_MTU_CFG            (0x23 * CFG_DWORD_LEN)
+#define CFG0_CC_EN              (0x24 * CFG_DWORD_LEN)
+#define CFG0_TRUST_HOST_EN      (0x25 * CFG_DWORD_LEN)
+#define CFG0_UBFM_CNA           (0x26 * CFG_DWORD_LEN)
+#define CFG0_USER_EID           (0x27 * CFG_DWORD_LEN)
+#define CFG0_USER_CNA           (0x2B * CFG_DWORD_LEN)
 
 /* route table */
 #define ROUTE_TBL_NUM_OF_TLB_ENTRY          (0x1 * CFG_DWORD_LEN)
@@ -76,10 +93,85 @@ struct ub_bus_controller {
 #define ROUTE_TBL_ROUTE_TBL_ENTRY(port_nums, cna) \
     ((0x10 + (((cna) + 1) * ROUTE_TBL_ROUTE_TBL_EBW(port_nums))) * CFG_DWORD_LEN)
 
+/* eid has 128 bits */
+#define CFG_EID_LEN             0x10
+/* In compact domain, eid consists of a 108-bit domain ID and a 20-bit node ID. */
+#define CFG_EID_NODE_ID         20
+/* the CAP bitmap of CFG0\CFG1\PORT BASIC have 256 bits(=32B) */
+#define CFG_CAP_BITMAP_LEN      0x20
+/* the Supported Feature of CFG0_BASIC and CFG1_BASIC have 128 bits(=16B) */
+#define CFG_SUP_FEATURE_LEN     0x10
+/* The size of SLICE is fixed to 1 KB except for RouteTable */
+#define CFG_SLICE_LEN           1024
+#define CFG_DISPLAY_BUF_LEN     4096
+
+#define CFG_ARRAY_SIZE(a, b) (sizeof(a) / sizeof(b))
+
+#define CFG_RESERVED            "reserved"
+
+enum {
+    CFG0_SLICE_TYPE = 0
+};
+
+struct ub_cfg_basic_cat {
+    uint32_t pos;
+    void (*show)(uint8_t *data);
+};
+
+struct ub_entity_cfg_info {
+    /* ub entity */
+    struct ub_entity *uent;
+    /* port number */
+    uint16_t port_num;
+    /* entity number */
+    uint16_t entity_num;
+    uint8_t cfg0_cap_bits[CFG_CAP_BITMAP_LEN];
+    uint8_t cfg0_sup_feat[CFG_SUP_FEATURE_LEN];
+    uint8_t data_buf[CFG_SLICE_LEN];
+    char display_buf[CFG_DISPLAY_BUF_LEN];
+};
+
+static inline const char* bit_parser(uint8_t data)
+{
+    return data == 0 ? "-" : "+";
+}
+
+static inline const char* mtu_parser(uint8_t data)
+{
+    static const char* mtu_desp[] = {
+        "1024B", "4096B", "8192B"
+    };
+
+    if (data < CFG_ARRAY_SIZE(mtu_desp, char*)) {
+        return mtu_desp[data];
+    } else {
+        return CFG_RESERVED;
+    }
+}
+
 enum {
     CFG_BIT0 = 0,
+    CFG_BIT1 = 1,
+    CFG_BIT2 = 2,
+    CFG_BIT3 = 3,
     CFG_BIT4 = 4,
+    CFG_BIT5 = 5,
+    CFG_BIT6 = 6,
+    CFG_BIT7 = 7,
+    CFG_BIT9 = 9,
+    CFG_BIT14 = 14,
+    CFG_BIT15 = 15,
     CFG_BIT16 = 16,
+    CFG_BIT23 = 23,
+    CFG_BIT24 = 24,
+    CFG_BIT27 = 27,
+    CFG_BIT28 = 28,
+    CFG_BIT31 = 31,
+    CFG_BIT32 = 32,
+    CFG_BIT39 = 39,
+    CFG_BIT47 = 47,
+    CFG_BIT48 = 48,
+    CFG_BIT63 = 63,
 };
 
 #define CLASS_CODE_MASK 0xff
@@ -97,6 +189,7 @@ static inline bool ub_is_ibus_controller(struct ub_entity *uent)
     }
 }
 
+#define CFG_1BYTE_BITS  0x8
 #define CFG_1BYTE_MASK  0x7
 #define CFG_1BYTE_DISP  0x3
 
@@ -110,9 +203,86 @@ static inline uint8_t to_1bit(uint8_t *data, uint8_t bit)
     return (data[pos] >> off) & 0x1;
 }
 
+static uint64_t to_chunkbits(uint8_t *data, uint8_t start_bit, uint8_t end_bit)
+{
+    static uint8_t valid_mask[] = {0x1, 0x3, 0x7, 0xF, 0x1F, 0x3F, 0x7F, 0xFF};
+    uint8_t start_pos, start_off;
+    uint8_t end_pos, end_off;
+    int i, j;
+    uint64_t val;
+
+    start_pos = start_bit >> CFG_1BYTE_DISP;
+    start_off = start_bit & CFG_1BYTE_MASK;
+    end_pos = end_bit >> CFG_1BYTE_DISP;
+    end_off = end_bit & CFG_1BYTE_MASK;
+
+    if (start_pos == end_pos) {
+        val = (data[start_pos] & valid_mask[end_off]) >> start_off;
+        return val;
+    }
+
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    val = data[start_pos] >> start_off;
+    i = start_pos + 1;
+    j = CFG_1BYTE_BITS - start_off;
+    while (i < end_pos) {
+        val |= ((uint64_t)data[i]) << j;
+        i++;
+        j += CFG_1BYTE_BITS;
+    }
+    val |= ((uint64_t)(data[end_pos] & valid_mask[end_off])) << j;
+#else
+    val = (uint64_t)(data[end_pos] & valid_mask[end_off]);
+    i = end_pos - 1;
+    j = end_off;
+    while (i > start_pos) {
+        val |= ((uint64_t)data[i]) << j;
+        i--;
+        j += CFG_1BYTE_BITS;
+    }
+    val |= ((uint64_t)data[start_pos] >> start_off) << j;
+#endif
+
+    return val;
+}
+
+static inline uint16_t to_uint16(uint8_t *data)
+{
+    return (uint16_t)to_chunkbits(data, CFG_BIT0, CFG_BIT15);
+}
+
+static inline uint32_t to_uint32(uint8_t *data)
+{
+    return (uint32_t)to_chunkbits(data, CFG_BIT0, CFG_BIT31);
+}
+
+static inline uint64_t to_uint64(uint8_t *data)
+{
+    return to_chunkbits(data, CFG_BIT0, CFG_BIT63);
+}
+
+/**
+  * Check whether the entity is UBE0.
+  */
+static inline bool ub_is_primary(struct ub_entity *uent)
+{
+    if (uent->entity_idx == 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+int slice_read(struct ub_entity *uent, uint32_t slice_addr, uint8_t *data_buf, uint32_t *data_len);
+uint8_t slice_get_version(uint8_t *slice_data);
+uint32_t slice_get_size(uint8_t *slice_data);
+int lsub_cfg0_basic(struct ub_entity_cfg_info *info);
 void ub_set_ids_file_path(struct ub_access *uacc, char *name, int to_be_freed);
 char *ub_lookup_name(struct ub_access *uacc, char *buf, size_t size,
                      uint32_t vendor_id, uint32_t device_id , uint32_t class_id);
 void show_route_tbl(struct ub_access *uacc, uint32_t uent_num, uint32_t cna);
+
+/* common interfaces */
+int parse_eid(uint8_t *data, char *display_buf);
 
 #endif /* LSUB_H */

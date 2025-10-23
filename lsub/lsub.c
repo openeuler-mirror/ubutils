@@ -16,8 +16,14 @@
 #include <ctype.h>
 #include "lsub.h"
 
+#define LS_MAX_SLICE            8
 #define INVLID_EID_MSG          "Invalid EID"
 #define INVLID_CNA_MSG          "Invalid CNA"
+#define INVALID_VERBOSE_MSG     "Invalid verbose"
+#define TOO_MANY_SLICE_MSG      "Too many slices, only 8 of them"
+#define DECIMAL_NUM             10
+#define LS_VERBOSE              1
+#define LS_HEX                  2
 
 struct cmd_option {
     char character;
@@ -26,6 +32,7 @@ struct cmd_option {
 
 static int g_opt_topo;
 static struct lsub_cmd_param ls_cmd;
+static struct ub_entity_cfg_info cfg_info;
 
 static char help_info[] =
 "Usage: lsub [<switches>]\n"
@@ -40,7 +47,11 @@ static char help_info[] =
 "-e <entity_num>\tDisplay the entity with the specified entity number,\n"
 "\t\tentity number is simplified numbering of ub entity in the ubus driver\n"
 "-E <eid>\tDisplay the bus instance with the specified EID\n"
-"-r <cna>\tShow UB entity route table in specified CNA\n";
+"-r <cna>\tShow UB entity route table in specified CNA\n"
+"-s [[<cfg0|cfg1|port>:]<slice>][,[<slice>]]\tDisplay informations about specified slices\n"
+"\n"
+"Display options:\n"
+"-v\t\tBe verbose\n";
 
 static void show_list(struct ub_access *uacc, uint32_t uent_num)
 {
@@ -123,7 +134,184 @@ static const char *parse_cna(char *str)
     return NULL;
 }
 
+static uint8_t *parse_slice_prefix(struct lsub_cmd_param *cmd, char *str)
+{
+#define CFG0_PREFIX_STRING      "cfg0"
+    if (strcasecmp(str, CFG0_PREFIX_STRING) == 0) {
+        return cmd->cfg0_slice;
+    } else {
+        return NULL;
+    }
+}
+
+static int is_slice_id(char *str)
+{
+    int i;
+
+    for (i = 0; str[i] != '\0'; i++) {
+        if (!isdigit(str[i])) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int parse_slice_context(struct lsub_cmd_param *cmd, char *cfg_str)
+{
+    uint8_t *cfg_id;
+    char *tmp_str;
+    char *save_str;
+    unsigned long slice_id;
+
+    /* syntax: (cfg0|cfg1|port)[:slice[,slice]{0-3}] */
+    tmp_str = strtok_r(cfg_str, ":", &save_str);
+    if (tmp_str == NULL) {
+        return -1;
+    }
+
+    cfg_id = parse_slice_prefix(cmd, tmp_str);
+    if (cfg_id == NULL) {
+        return 0;
+    }
+
+    /* If no slice is selected, the default slice is CFG0\CFG1\PORT BASIC. */
+    if (save_str[0] == '\0') {
+        cfg_id[0] = 1;
+        return 0;
+    }
+
+    while ((tmp_str = strtok_r(NULL, ",", &save_str)) != NULL) {
+        if (!is_slice_id(tmp_str)) {
+            return -1;
+        }
+        slice_id = strtoul(tmp_str, NULL, DECIMAL_NUM);
+        if (slice_id >= MAX_SLICE) {
+            return -1;
+        }
+        cfg_id[slice_id] = 1;
+    }
+
+    return 0;
+}
+
+static int calc_slice_cnt(struct lsub_cmd_param *cmd)
+{
+    int slice_num;
+    int i;
+
+    for (i = 0; i < MAX_SLICE; i++) {
+        if (cmd->cfg0_slice[i] == 1) {
+            cmd->cfg0_slice_count++;
+        }
+    }
+
+    slice_num = cmd->cfg0_slice_count;
+
+    return slice_num;
+}
+
+static const char *parse_slice(char *str)
+{
+    const char *delim = "#";
+    char *tmp_str;
+    char *save_str;
+    int ret_code;
+    int slice_num;
+
+    /* syntax: (cfg0|cfg1|port)[:slice[,slice]{0-7}][#(cfg0|cfg1|port)[:slice[,slice]{0-7}]] */
+    for (tmp_str = strtok_r(str, delim, &save_str);
+        tmp_str != NULL;
+        tmp_str = strtok_r(NULL, delim, &save_str)) {
+        ret_code = parse_slice_context(&ls_cmd, tmp_str);
+        if (ret_code != 0) {
+            return INVALID_VERBOSE_MSG;
+        }
+    }
+
+    slice_num = calc_slice_cnt(&ls_cmd);
+    if (slice_num > LS_MAX_SLICE) {
+        return TOO_MANY_SLICE_MSG;
+    }
+
+    return NULL;
+}
+
+static int check_ls_cmd(struct ub_access *uacc, int ls_type)
+{
+    struct ub_entity *uent;
+    int slice_num;
+
+    if (ls_cmd.uent_num == 0) {
+        return -EINVAL;
+    }
+
+    uent = ub_get_uent_by_uent_num(uacc, ls_cmd.uent_num);
+    if (!uent) {
+        return -EINVAL;
+    }
+    cfg_info.uent = uent;
+
+    slice_num = ls_cmd.cfg0_slice_count;
+    if (ls_type == LS_VERBOSE) {
+        /* If no slice is selected, the default slice is CFG0 and CFG1 BASIC. */
+        if (slice_num == 0) {
+            ls_cmd.cfg0_slice[0] = 1;
+        }
+    } else if (ls_type == LS_HEX) {
+        if (slice_num != 1) {
+            fprintf(stderr, "You need to select one slice.\n");
+            return -EINVAL;
+        }
+    }
+
+    return 0;
+}
+
+static void show_slice(struct lsub_cmd_param *cmd, struct ub_entity_cfg_info *info, uint8_t type)
+{
+    uint8_t *ls_data;
+    int (*ls_basic)(struct ub_entity_cfg_info *info);
+    uint32_t i;
+
+    if (type == CFG0_SLICE_TYPE) {
+        ls_data = cmd->cfg0_slice;
+        ls_basic = lsub_cfg0_basic;
+    } else {
+        return;
+    }
+
+    for (i = 0; i < MAX_SLICE; i++) {
+        if (!ls_data[i]) {
+            continue;
+        }
+        if (i == 0) {
+            ls_basic(info);
+        }
+    }
+}
+
+static void show_verbose(struct ub_access *uacc)
+{
+    char uent_info[64];
+    struct ub_entity *uent;
+
+    if (check_ls_cmd(uacc, LS_VERBOSE)) {
+        return;
+    }
+    uent = cfg_info.uent;
+
+    /* show ub entity information */
+    sprintf(uent_info, "<%05x> Class <%04x>: Device <%04x>:<%04x>",
+            uent->uent_num, uent->class_code, uent->vendor_id, uent->device_id);
+    printf("%s", uent_info);
+
+    show_slice(&ls_cmd, &cfg_info, CFG0_SLICE_TYPE);
+    printf("\n");
+}
+
 static int list_show_flag;
+static int verbose_flag;
 static int route_tbl_flag;
 static int mue_ue_flag;
 static int bi_flag;
@@ -172,6 +360,25 @@ static int cmd_option_entity_name(struct ub_access *uacc)
         (void)printf("%s\n", err_msg);
         return -EINVAL;
     }
+    return 0;
+}
+
+static int cmd_option_slice(struct ub_access *uacc)
+{
+    const char *err_msg;
+
+    uacc->debug("cmd_option_slice\n");
+    if ((err_msg = parse_slice(optarg))) {
+        (void)printf("%s\n", err_msg);
+        return -EINVAL;
+    }
+    return 0;
+}
+
+static int cmd_option_verbose(struct ub_access *uacc)
+{
+    uacc->debug("verbose_flag enable\n");
+    verbose_flag = 1;
     return 0;
 }
 
@@ -237,6 +444,8 @@ static struct cmd_option cmd_options[] = {
     { 'n', cmd_option_numeric },
     { 'i', cmd_option_ids },
     { 'e', cmd_option_entity_name },
+    { 's', cmd_option_slice },
+    { 'v', cmd_option_verbose },
     { 'r', cmd_option_routetbl },
     { 'k', cmd_option_kernel },
     { 'b', cmd_option_bi },
@@ -245,7 +454,9 @@ static struct cmd_option cmd_options[] = {
 
 static void cmd_option_further_proc(struct ub_access *uacc)
 {
-    if (g_opt_topo) {
+    if (verbose_flag) {
+        show_verbose(uacc);
+    } else if (g_opt_topo) {
         show_topo();
     } else if (route_tbl_flag) {
         show_route_tbl(uacc, ls_cmd.uent_num, ls_cmd.cna);
