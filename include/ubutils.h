@@ -37,7 +37,7 @@
 #define MAX_DRIVER_NAME_LEN 256
 
 #define UB_PRINTF(x, y) __attribute__((format(printf, x, y)))
-#define LSUB_OPTIONS "htlni:kbE:r:e:s:vp:"
+#define LSUB_OPTIONS "htlni:kbE:r:e:s:vxp:"
 #define SETUB_OPTIONS "hs:b:g:d:e:u:"
 #define HASH_SIZE 4099
 #define HEX 16

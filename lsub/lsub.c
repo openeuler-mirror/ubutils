@@ -53,7 +53,8 @@ static char help_info[] =
 "-s [[<cfg0|cfg1|port>:]<slice>][,[<slice>]]\tDisplay informations about specified slices\n"
 "\n"
 "Display options:\n"
-"-v\t\tBe verbose\n";
+"-v\t\tBe verbose\n"
+"-x\t\tShow hex-dump of one config space slice\n";
 
 static void show_list(struct ub_access *uacc, uint32_t uent_num)
 {
@@ -376,8 +377,75 @@ static void show_verbose(struct ub_access *uacc)
     printf("\n");
 }
 
+static void show_hex_dump(uint32_t slice_addr)
+{
+#define DW_BYTES_FLAG 3
+#define LINE_BYTES_FLAG 15
+    uint32_t data_len, i;
+    int ret_code;
+
+    data_len = CFG_SLICE_LEN;
+    ret_code = slice_read(cfg_info.uent, slice_addr, cfg_info.data_buf, &data_len);
+    if (ret_code) {
+        printf("lsub error: failed to read slice\n");
+        return;
+    }
+
+    for (i = 0; i < data_len; i++) {
+        if ((i & LINE_BYTES_FLAG) == 0) {
+            printf("%08x: ", slice_addr + i);
+        }
+        printf("%02x ", cfg_info.data_buf[i]);
+        if ((i & DW_BYTES_FLAG) == DW_BYTES_FLAG) {
+            printf("  ");
+        }
+        if ((i & LINE_BYTES_FLAG) == LINE_BYTES_FLAG) {
+            printf("\n");
+        }
+    }
+    printf("\n");
+}
+
+static void show_hex(struct ub_access *uacc)
+{
+    uint32_t i;
+
+    if (check_ls_cmd(uacc, LS_HEX)) {
+        return;
+    }
+
+    for (i = 0; i < MAX_SLICE; i++) {
+        if (ls_cmd.cfg0_slice[i] == 1) {
+            if (cfg0_check_capid(&cfg_info, i)) {
+                return show_hex_dump(CFG0_SLICE_ADDR(i));
+            } else {
+                printf("Warning: Unsupported capability\n");
+                return;
+            }
+        }
+        if (ls_cmd.cfg1_slice[i] == 1) {
+            if (cfg1_check_capid(&cfg_info, i)) {
+                return show_hex_dump(CFG1_SLICE_ADDR(i));
+            } else {
+                printf("Warning: Unsupported capability\n");
+                return;
+            }
+        }
+        if (ls_cmd.port_slice[i] == 1) {
+            cfg_info.port = ls_cmd.port;
+            if (port_check_capid(&cfg_info, i)) {
+                return show_hex_dump(PORT_SLICE_ADDR(ls_cmd.port, i));
+            } else {
+                printf("Warning: Unsupported capability\n");
+                return;
+            }
+        }
+    }
+}
+
 static int list_show_flag;
 static int verbose_flag;
+static int hex_flag;
 static int route_tbl_flag;
 static int mue_ue_flag;
 static int bi_flag;
@@ -460,6 +528,13 @@ static int cmd_option_verbose(struct ub_access *uacc)
     return 0;
 }
 
+static int cmd_option_hex(struct ub_access *uacc)
+{
+    uacc->debug("hex_flag enable\n");
+    hex_flag = 1;
+    return 0;
+}
+
 static int cmd_option_routetbl(struct ub_access *uacc)
 {
     const char *err_msg;
@@ -525,6 +600,7 @@ static struct cmd_option cmd_options[] = {
     { 'p', cmd_option_port },
     { 's', cmd_option_slice },
     { 'v', cmd_option_verbose },
+    { 'x', cmd_option_hex },
     { 'r', cmd_option_routetbl },
     { 'k', cmd_option_kernel },
     { 'b', cmd_option_bi },
@@ -535,6 +611,8 @@ static void cmd_option_further_proc(struct ub_access *uacc)
 {
     if (verbose_flag) {
         show_verbose(uacc);
+    } else if (hex_flag) {
+        show_hex(uacc);
     } else if (g_opt_topo) {
         show_topo();
     } else if (route_tbl_flag) {
