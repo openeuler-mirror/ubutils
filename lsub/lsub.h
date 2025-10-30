@@ -84,6 +84,8 @@ struct ub_bus_controller {
 #define CFG0_UBFM_CNA           (0x26 * CFG_DWORD_LEN)
 #define CFG0_USER_EID           (0x27 * CFG_DWORD_LEN)
 #define CFG0_USER_CNA           (0x2B * CFG_DWORD_LEN)
+#define CFG0_SHP_CAP_ID         0x2
+#define CFG0_ERR_RECORD_CAP_ID  0x3
 
 /* route table */
 #define ROUTE_TBL_NUM_OF_TLB_ENTRY          (0x1 * CFG_DWORD_LEN)
@@ -103,6 +105,10 @@ struct ub_bus_controller {
 #define CFG_SUP_FEATURE_LEN     0x10
 /* The size of SLICE is fixed to 1 KB except for RouteTable */
 #define CFG_SLICE_LEN           1024
+/* invalid CAP id */
+#define CFG_INVALID_CAP_ID      256
+/* invaild port number */
+#define CFG_INVALID_PORT_NUM    0xFFFF
 #define CFG_DISPLAY_BUF_LEN     4096
 
 #define CFG_ARRAY_SIZE(a, b) (sizeof(a) / sizeof(b))
@@ -116,6 +122,11 @@ enum {
 struct ub_cfg_basic_cat {
     uint32_t pos;
     void (*show)(uint8_t *data);
+};
+
+struct ub_cfg_cap_cat {
+    uint32_t cap_id;
+    void (*show)(uint8_t *cap_data, uint32_t data_len);
 };
 
 struct ub_entity_cfg_info {
@@ -149,6 +160,19 @@ static inline const char* mtu_parser(uint8_t data)
     }
 }
 
+static inline const char* led_parse(uint8_t status)
+{
+    static const char* led_status[] = {
+        "Off", "On", "Blink"
+    };
+
+    if (status < CFG_ARRAY_SIZE(led_status, char*)) {
+        return led_status[status];
+    } else {
+        return CFG_RESERVED;
+    }
+}
+
 enum {
     CFG_BIT0 = 0,
     CFG_BIT1 = 1,
@@ -158,19 +182,39 @@ enum {
     CFG_BIT5 = 5,
     CFG_BIT6 = 6,
     CFG_BIT7 = 7,
+    CFG_BIT8 = 8,
     CFG_BIT9 = 9,
+    CFG_BIT10 = 10,
+    CFG_BIT11 = 11,
+    CFG_BIT12 = 12,
+    CFG_BIT13 = 13,
     CFG_BIT14 = 14,
     CFG_BIT15 = 15,
     CFG_BIT16 = 16,
+    CFG_BIT17 = 17,
+    CFG_BIT18 = 18,
+    CFG_BIT19 = 19,
+    CFG_BIT20 = 20,
+    CFG_BIT21 = 21,
+    CFG_BIT22 = 22,
     CFG_BIT23 = 23,
     CFG_BIT24 = 24,
+    CFG_BIT25 = 25,
+    CFG_BIT26 = 26,
     CFG_BIT27 = 27,
     CFG_BIT28 = 28,
+    CFG_BIT29 = 29,
+    CFG_BIT30 = 30,
     CFG_BIT31 = 31,
     CFG_BIT32 = 32,
+    CFG_BIT35 = 35,
+    CFG_BIT36 = 36,
     CFG_BIT39 = 39,
+    CFG_BIT40 = 40,
+    CFG_BIT43 = 43,
     CFG_BIT47 = 47,
     CFG_BIT48 = 48,
+    CFG_BIT56 = 56,
     CFG_BIT63 = 63,
 };
 
@@ -277,6 +321,8 @@ int slice_read(struct ub_entity *uent, uint32_t slice_addr, uint8_t *data_buf, u
 uint8_t slice_get_version(uint8_t *slice_data);
 uint32_t slice_get_size(uint8_t *slice_data);
 int lsub_cfg0_basic(struct ub_entity_cfg_info *info);
+int lsub_cfg0_cap(struct ub_entity_cfg_info *info, uint32_t cap_id);
+int cfg0_check_capid(struct ub_entity_cfg_info *info, uint32_t cap_id);
 void ub_set_ids_file_path(struct ub_access *uacc, char *name, int to_be_freed);
 char *ub_lookup_name(struct ub_access *uacc, char *buf, size_t size,
                      uint32_t vendor_id, uint32_t device_id , uint32_t class_id);

@@ -251,6 +251,7 @@ static int check_ls_cmd(struct ub_access *uacc, int ls_type)
         return -EINVAL;
     }
     cfg_info.uent = uent;
+    cfg_info.port_num = CFG_INVALID_PORT_NUM;
 
     slice_num = ls_cmd.cfg0_slice_count;
     if (ls_type == LS_VERBOSE) {
@@ -272,11 +273,13 @@ static void show_slice(struct lsub_cmd_param *cmd, struct ub_entity_cfg_info *in
 {
     uint8_t *ls_data;
     int (*ls_basic)(struct ub_entity_cfg_info *info);
+    int (*ls_cap)(struct ub_entity_cfg_info *info, uint32_t cap_id);
     uint32_t i;
 
     if (type == CFG0_SLICE_TYPE) {
         ls_data = cmd->cfg0_slice;
         ls_basic = lsub_cfg0_basic;
+        ls_cap = lsub_cfg0_cap;
     } else {
         return;
     }
@@ -287,6 +290,8 @@ static void show_slice(struct lsub_cmd_param *cmd, struct ub_entity_cfg_info *in
         }
         if (i == 0) {
             ls_basic(info);
+        } else {
+            ls_cap(info, i);
         }
     }
 }
