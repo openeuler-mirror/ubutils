@@ -125,6 +125,32 @@ struct ub_bus_controller {
 #define PORT_BASIC_CNA          (0xF * CFG_DWORD_LEN)
 #define PORT_BASIC_RST          (0x10 * CFG_DWORD_LEN) /* Rort Reset Attribute is WC */
 
+enum {
+    PORT_CAP1_LINK = 1,
+    PORT_CAP2_LINK_LOG,
+    PORT_CAP3_RSVD,
+    PORT_CAP4_DATA_RATE1,
+    PORT_CAP5_DATA_RATE2,
+    PORT_CAP6_DATA_RATE3,
+    PORT_CAP7_DATA_RATE4,
+    PORT_CAP8_DATA_RATE5,
+    PORT_CAP9_DATA_RATE6,
+    PORT_CAP10_DATA_RATE7,
+    PORT_CAP11_DATA_RATE8,
+    PORT_CAP12_DATA_RATE9,
+    PORT_CAP13_RSVD,
+    PORT_CAP14_EYE_MONITOR,
+    PORT_CAP15_QDLWS,
+    PORT_CAP16_RSVD,
+    PORT_CAP17_RSVD,
+    PORT_CAP18_RSVD,
+    PORT_CAP19_RSVD,
+    PORT_CAP20_LMSM_ST,
+    PORT_CAP21_PORT_ERR_RECORD,
+};
+
+#define PORT_VN_NUM 16
+
 /* route table */
 #define ROUTE_TBL_NUM_OF_TLB_ENTRY          (0x1 * CFG_DWORD_LEN)
 #define ROUTE_TBL_EXACT_ROUTE_SUP           (0x1 * CFG_DWORD_LEN + 2)
@@ -373,6 +399,8 @@ int lsub_cfg1_cap(struct ub_entity_cfg_info *info, uint32_t cap_id);
 int cfg1_check_capid(struct ub_entity_cfg_info *info, uint32_t cap_id);
 int port_check_id(struct ub_entity *uent, uint32_t port_id);
 int lsub_port_basic(struct ub_entity_cfg_info *info);
+int lsub_port_cap(struct ub_entity_cfg_info *info, uint32_t cap_id);
+int port_check_capid(struct ub_entity_cfg_info *info, uint32_t cap_id);
 void ub_set_ids_file_path(struct ub_access *uacc, char *name, int to_be_freed);
 char *ub_lookup_name(struct ub_access *uacc, char *buf, size_t size,
                      uint32_t vendor_id, uint32_t device_id , uint32_t class_id);

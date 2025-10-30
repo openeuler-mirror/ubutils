@@ -333,6 +333,7 @@ static void show_slice(struct lsub_cmd_param *cmd, struct ub_entity_cfg_info *in
         info->port = cmd->port;
         ls_data = cmd->port_slice;
         ls_basic = lsub_port_basic;
+        ls_cap = lsub_port_cap;
     } else {
         return;
     }
