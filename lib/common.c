@@ -104,6 +104,30 @@ int parse_x32(char *c, unsigned int *resp)
     }
 }
 
+int parse_x16(char *c, unsigned short *resp)
+{
+    char *stop;
+    unsigned long value;
+
+    if (c == NULL || *c == '\0') {
+        return -1;
+    }
+    errno = 0;
+    value = strtoul(c, &stop, HEX);
+    if (errno != 0) {
+        return -1;
+    }
+    if (value > UINT16_MAX) {
+        return -1;
+    }
+    *resp = (unsigned short)value;
+    if (*stop != '\0') {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
 struct ub_access *ub_alloc_acc(void)
 {
     struct ub_access *uacc;

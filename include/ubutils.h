@@ -16,12 +16,14 @@
 #define UB_SYS_DIR_LEN 1024
 #define OBJNAMELEN 1024
 #define UB_CONFIG_SIZE 1024
+#define UB_UNIFIED_BUS "/dev/unified_bus"
+#define UB_CLUSTER "/sys/bus/ub/cluster"
 #define UB_PATH_SYS_BUS_UB "/sys/bus/ub"
 #define MAX_UENT_NUM 0xFFFFF
 #define MAX_POSITION 0x3FFFFFFFFULL
 
 #define UB_PRINTF(x, y) __attribute__((format(printf, x, y)))
-#define SETUB_OPTIONS "hs:"
+#define SETUB_OPTIONS "hs:b:g:d:e:u:"
 #define HEX 16
 
 struct option {
@@ -97,7 +99,34 @@ enum ub_access_type {
     UB_ACCESS_MAX
 };
 
+struct ub_guid {
+    union {
+        struct {
+            uint64_t seq_num;
+            uint32_t rsvd0 : 24;
+            uint32_t type : 4;
+            uint32_t version : 4;
+            uint32_t device : 16;
+            uint32_t vendor : 16;
+        } bits;
+
+        struct {
+            uint64_t guid_l;
+            uint64_t guid_h;
+        } datas;
+    };
+};
+
 struct ub_bi_para {
+    struct ub_guid guid;
+    struct ub_guid d_guid;
+    uint32_t opt;
+    uint32_t eid;
+    uint16_t upi;
+    uint32_t type;
+    uint32_t opt_en;
+    uint8_t guid_flag;
+    uint8_t dguid_flag;
 };
 
 struct ub_access *ub_alloc_acc(void);
@@ -113,6 +142,7 @@ int ub_write_block(struct ub_entity *uent, uint64_t pos, uint8_t *buf, int len);
 int ub_fill_uent_info(struct ub_entity *uent);
 int parse_x64(char *c, unsigned long long int *resp);
 int parse_x32(char *c, unsigned int *resp);
+int parse_x16(char *c, unsigned short *resp);
 
 extern struct ub_methods linux_sysfs;
 

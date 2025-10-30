@@ -5,7 +5,8 @@ file(GLOB SETUB_SRC ./*.c ../lib/*.c)
 add_executable(setub ${SETUB_SRC})
 target_include_directories(setub PRIVATE
     ./
-    ../include)
+    ../include
+    ./kernel_headers)
 target_link_directories(setub PRIVATE ${CMAKE_INSTALL_PREFIX}/lib)
 install(TARGETS setub RUNTIME OPTIONAL)
 
