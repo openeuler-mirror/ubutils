@@ -17,6 +17,7 @@
 #include <ubutils.h>
 
 static int g_opt_debug;
+struct device *g_first_dev;
 static struct ub_methods *g_ub_methods[UB_ACCESS_MAX] = {
     &linux_sysfs,
 };
@@ -55,6 +56,54 @@ ub_debug_print(const char *msg, ...)
     }
 }
 
+int parse_x64(char *c, unsigned long long int *resp)
+{
+    unsigned long long int value;
+    char *stop;
+
+    if (c == NULL || *c == '\0') {
+        return -1;
+    }
+    errno = 0;
+    value = strtoull(c, &stop, HEX);
+    if (errno) {
+        return -1;
+    }
+    if ((value & ~0ULL) != value) {
+        return -1;
+    }
+    *resp = value;
+    if (*stop) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+int parse_x32(char *c, unsigned int *resp)
+{
+    char *stop;
+    unsigned long int value;
+
+    if (c == NULL || *c == '\0') {
+        return -1;
+    }
+    errno = 0;
+    value = strtoul(c, &stop, HEX);
+    if (errno) {
+        return -1;
+    }
+    if ((value & ~0U) != value) {
+        return -1;
+    }
+    *resp = (unsigned int)value;
+    if (*stop) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
 struct ub_access *ub_alloc_acc(void)
 {
     struct ub_access *uacc;
@@ -75,6 +124,45 @@ struct ub_access *ub_alloc_acc(void)
     }
 
     return uacc;
+}
+
+struct ub_entity *ub_alloc_uent(struct ub_access *uacc)
+{
+    struct ub_entity *uent;
+    struct ub_route_tb *route_tb;
+
+    uent = (struct ub_entity *)calloc(1, sizeof(struct ub_entity));
+    if (!uent) {
+        return NULL;
+    }
+
+    uent->access = uacc;
+    uent->methods = uacc->methods;
+    if (uent->methods->init_dev) {
+        uent->methods->init_dev(uent);
+    }
+
+    return uent;
+}
+
+int ub_fill_uent_info(struct ub_entity *uent)
+{
+    return uent->methods->fill_info(uent);
+}
+
+int ub_scan_uent(struct ub_access *uacc)
+{
+    return uacc->methods->scan(uacc);
+}
+
+int ub_read_block(struct ub_entity *uent, uint64_t pos, uint8_t *buf, int len)
+{
+    return uent->methods->read(uent, pos, buf, len);
+}
+
+int ub_write_block(struct ub_entity *uent, uint64_t pos, uint8_t *buf, int len)
+{
+    return uent->methods->write(uent, pos, buf, len);
 }
 
 int ub_sel_access_methods(struct ub_access *uacc)
@@ -100,6 +188,60 @@ int ub_sel_access_methods(struct ub_access *uacc)
     }
 
     return ret;
+}
+
+struct device *ub_scan_one_device(struct ub_entity *uent)
+{
+    struct device *dev;
+    struct ub_access *uacc = uent->access;
+
+    dev = (struct device *)calloc(1, sizeof(struct device));
+    if (!dev) {
+        return NULL;
+    }
+    dev->uent = uent;
+    dev->config = (uint8_t *)calloc(1, UB_CONFIG_SIZE);
+    if (!dev->config) {
+        uacc->error("device config alloc failed.\n");
+        free(dev);
+        return NULL;
+    }
+    ub_fill_uent_info(uent);
+
+    return dev;
+}
+
+int ub_scan_devices(struct ub_access *uacc)
+{
+    struct device *dev;
+    struct ub_entity *uent;
+    int ret;
+
+    ret = ub_scan_uent(uacc);
+    if (ret) {
+        return ret;
+    }
+
+    for (uent = uacc->uents; uent; uent = uent->next) {
+        dev = ub_scan_one_device(uent);
+        if (!dev) {
+            uacc->error("scan entity of %05x failed.\n",
+                        uent->uent_num);
+            return -ENXIO;
+        }
+        dev->next = g_first_dev;
+        g_first_dev = dev;
+    }
+
+    return 0;
+}
+
+void ub_free_uent(struct ub_entity *uent)
+{
+    if (uent->methods->cleanup_dev) {
+        uent->methods->cleanup_dev(uent);
+    }
+    free(uent);
 }
 
 int ub_init(struct ub_access *uacc)
@@ -139,9 +281,23 @@ static void ub_free_params(struct ub_access *uacc)
 
 void ub_cleanup(struct ub_access *uacc)
 {
+    struct ub_entity *uent, *next_uent;
+    struct device *dev, *next_dev;
+
+    for (uent = uacc->uents; uent; uent = next_uent) {
+        next_uent = uent->next;
+        ub_free_uent(uent);
+    }
     if (uacc->methods && uacc->methods->cleanup) {
         uacc->methods->cleanup(uacc);
     }
     ub_free_params(uacc);
     free(uacc);
+
+    /* Free all device */
+    for (dev = g_first_dev; dev; dev = next_dev) {
+        free(dev->config);
+        next_dev = dev->next;
+        free(dev);
+    }
 }

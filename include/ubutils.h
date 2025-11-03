@@ -13,14 +13,47 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define UB_SYS_DIR_LEN 1024
+#define OBJNAMELEN 1024
+#define UB_CONFIG_SIZE 1024
 #define UB_PATH_SYS_BUS_UB "/sys/bus/ub"
+#define MAX_UENT_NUM 0xFFFFF
+#define MAX_POSITION 0x3FFFFFFFFULL
 
 #define UB_PRINTF(x, y) __attribute__((format(printf, x, y)))
-#define SETUB_OPTIONS "h"
+#define SETUB_OPTIONS "hs:"
+#define HEX 16
+
+struct option {
+    uint32_t uent_num;
+    uint64_t position;
+    uint32_t width;
+    bool writeable; /* 1=write; 0=read */
+    uint32_t value;
+};
+
+struct device {
+    struct device *next;
+    struct ub_entity *uent;
+    uint8_t *config;
+};
+
+struct ub_entity {
+    struct ub_entity *next; /* Next uent in the chain */
+
+    /* These fields are define by specification */
+    uint32_t uent_num;
+
+    /* Fields for tool usage */
+    struct ub_access *access;
+    struct ub_methods *methods;
+};
 
 /* Options you can change */
 struct ub_access {
     unsigned int method; /* Access method */
+
+    struct ub_entity *uents; /* uents found on this bus */
 
     /* Fields used internally */
     struct ub_methods *methods;
@@ -42,6 +75,12 @@ struct ub_methods {
     int (*detect)(struct ub_access *);
     void (*init)(struct ub_access *);
     void (*cleanup)(struct ub_access *);
+    int (*scan)(struct ub_access *);
+    int (*fill_info)(struct ub_entity *);
+    int (*read)(struct ub_entity *, uint64_t, uint8_t *, int);
+    int (*write)(struct ub_entity *, uint64_t, uint8_t *, int);
+    void (*init_dev)(struct ub_entity *);
+    void (*cleanup_dev)(struct ub_entity *);
 };
 
 struct ub_param {
@@ -62,9 +101,18 @@ struct ub_bi_para {
 };
 
 struct ub_access *ub_alloc_acc(void);
+struct ub_entity *ub_alloc_uent(struct ub_access *uacc);
 int ub_sel_access_methods(struct ub_access *uacc);
 int ub_init(struct ub_access *uacc);
+struct device *ub_scan_one_device(struct ub_entity *uent);
+int ub_scan_uent(struct ub_access *uacc);
+void ub_free_uent(struct ub_entity *uent);
 void ub_cleanup(struct ub_access *uacc);
+int ub_read_block(struct ub_entity *uent, uint64_t pos, uint8_t *buf, int len);
+int ub_write_block(struct ub_entity *uent, uint64_t pos, uint8_t *buf, int len);
+int ub_fill_uent_info(struct ub_entity *uent);
+int parse_x64(char *c, unsigned long long int *resp);
+int parse_x32(char *c, unsigned int *resp);
 
 extern struct ub_methods linux_sysfs;
 
