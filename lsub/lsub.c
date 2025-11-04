@@ -137,8 +137,11 @@ static const char *parse_cna(char *str)
 static uint8_t *parse_slice_prefix(struct lsub_cmd_param *cmd, char *str)
 {
 #define CFG0_PREFIX_STRING      "cfg0"
+#define CFG1_PREFIX_STRING      "cfg1"
     if (strcasecmp(str, CFG0_PREFIX_STRING) == 0) {
         return cmd->cfg0_slice;
+    } else if (strcasecmp(str, CFG1_PREFIX_STRING) == 0) {
+        return cmd->cfg1_slice;
     } else {
         return NULL;
     }
@@ -204,9 +207,12 @@ static int calc_slice_cnt(struct lsub_cmd_param *cmd)
         if (cmd->cfg0_slice[i] == 1) {
             cmd->cfg0_slice_count++;
         }
+        if (cmd->cfg1_slice[i] == 1) {
+            cmd->cfg1_slice_count++;
+        }
     }
 
-    slice_num = cmd->cfg0_slice_count;
+    slice_num = cmd->cfg0_slice_count + cmd->cfg1_slice_count;
 
     return slice_num;
 }
@@ -253,7 +259,7 @@ static int check_ls_cmd(struct ub_access *uacc, int ls_type)
     cfg_info.uent = uent;
     cfg_info.port_num = CFG_INVALID_PORT_NUM;
 
-    slice_num = ls_cmd.cfg0_slice_count;
+    slice_num = ls_cmd.cfg0_slice_count + ls_cmd.cfg1_slice_count;
     if (ls_type == LS_VERBOSE) {
         /* If no slice is selected, the default slice is CFG0 and CFG1 BASIC. */
         if (slice_num == 0) {
@@ -261,6 +267,7 @@ static int check_ls_cmd(struct ub_access *uacc, int ls_type)
             ls_cmd.cfg0_slice[CFG0_ERR_RECORD_CAP_ID] = 1;
             ls_cmd.cfg0_slice[CFG0_ERR_INFO_CAP_ID] = 1;
             ls_cmd.cfg0_slice[CFG0_EMQ_CAP_ID] = 1;
+            ls_cmd.cfg1_slice[0] = 1;
         }
     } else if (ls_type == LS_HEX) {
         if (slice_num != 1) {
@@ -283,6 +290,9 @@ static void show_slice(struct lsub_cmd_param *cmd, struct ub_entity_cfg_info *in
         ls_data = cmd->cfg0_slice;
         ls_basic = lsub_cfg0_basic;
         ls_cap = lsub_cfg0_cap;
+    } else if (type == CFG1_SLICE_TYPE) {
+        ls_data = cmd->cfg1_slice;
+        ls_basic = lsub_cfg1_basic;
     } else {
         return;
     }
@@ -315,6 +325,7 @@ static void show_verbose(struct ub_access *uacc)
     printf("%s", uent_info);
 
     show_slice(&ls_cmd, &cfg_info, CFG0_SLICE_TYPE);
+    show_slice(&ls_cmd, &cfg_info, CFG1_SLICE_TYPE);
     printf("\n");
 }
 

@@ -65,6 +65,7 @@ struct ub_bus_controller {
   * +------------+---------------+-----------------+
   */
 #define CFG0_SLICE_ADDR(i)      ((0x100 * (i)) * CFG_DWORD_LEN)
+#define CFG1_SLICE_ADDR(i)      ((0x10000 + 0x100 * (i)) * CFG_DWORD_LEN)
 #define ROUTE_TBL_SLICE         (0xF0000000ULL * CFG_DWORD_LEN)
 
 /* cfg0 */
@@ -88,6 +89,28 @@ struct ub_bus_controller {
 #define CFG0_ERR_RECORD_CAP_ID  0x3
 #define CFG0_ERR_INFO_CAP_ID    0x4
 #define CFG0_EMQ_CAP_ID         0x5
+
+/* cfg1 */
+#define CFG1_CAP_BITMAP         (0x1 * CFG_DWORD_LEN)
+#define CFG1_SUPPORT_FEATURE    (0x9 * CFG_DWORD_LEN)
+#define CFG1_ERS0_SS            (0xD * CFG_DWORD_LEN)
+#define CFG1_ERS1_SS            (0xE * CFG_DWORD_LEN)
+#define CFG1_ERS2_SS            (0xF * CFG_DWORD_LEN)
+#define CFG1_ERS0_SA            (0x10 * CFG_DWORD_LEN)
+#define CFG1_ERS1_SA            (0x12 * CFG_DWORD_LEN)
+#define CFG1_ERS2_SA            (0x14 * CFG_DWORD_LEN)
+#define CFG1_ERS0_UBA           (0x16 * CFG_DWORD_LEN)
+#define CFG1_ERS1_UBA           (0x18 * CFG_DWORD_LEN)
+#define CFG1_ERS2_UBA           (0x1A * CFG_DWORD_LEN)
+#define CFG1_ELR                (0x1C * CFG_DWORD_LEN)
+#define CFG1_ELR_DONE           (0x1D * CFG_DWORD_LEN)
+#define CFG1_SYS_PGS            (0x21 * CFG_DWORD_LEN)
+#define CFG1_EID_UPI_TBA        (0x22 * CFG_DWORD_LEN)
+#define CFG1_EID_UPI_TEN        (0x24 * CFG_DWORD_LEN)
+#define CFG1_CLASS_CODE         (0x29 * CFG_DWORD_LEN)
+#define CFG1_DEV_TOKEN_ID       (0x2D * CFG_DWORD_LEN)
+#define CFG1_BUS_EN             (0x2E * CFG_DWORD_LEN)
+#define CFG1_DEV_RS_ACESS_EN    (0x2F * CFG_DWORD_LEN)
 
 /* route table */
 #define ROUTE_TBL_NUM_OF_TLB_ENTRY          (0x1 * CFG_DWORD_LEN)
@@ -118,7 +141,8 @@ struct ub_bus_controller {
 #define CFG_RESERVED            "reserved"
 
 enum {
-    CFG0_SLICE_TYPE = 0
+    CFG0_SLICE_TYPE = 0,
+    CFG1_SLICE_TYPE
 };
 
 struct ub_cfg_basic_cat {
@@ -140,6 +164,8 @@ struct ub_entity_cfg_info {
     uint16_t entity_num;
     uint8_t cfg0_cap_bits[CFG_CAP_BITMAP_LEN];
     uint8_t cfg0_sup_feat[CFG_SUP_FEATURE_LEN];
+    uint8_t cfg1_cap_bits[CFG_CAP_BITMAP_LEN];
+    uint8_t cfg1_sup_feat[CFG_SUP_FEATURE_LEN];
     uint8_t data_buf[CFG_SLICE_LEN];
     char display_buf[CFG_DISPLAY_BUF_LEN];
 };
@@ -325,6 +351,7 @@ uint32_t slice_get_size(uint8_t *slice_data);
 int lsub_cfg0_basic(struct ub_entity_cfg_info *info);
 int lsub_cfg0_cap(struct ub_entity_cfg_info *info, uint32_t cap_id);
 int cfg0_check_capid(struct ub_entity_cfg_info *info, uint32_t cap_id);
+int lsub_cfg1_basic(struct ub_entity_cfg_info *info);
 void ub_set_ids_file_path(struct ub_access *uacc, char *name, int to_be_freed);
 char *ub_lookup_name(struct ub_access *uacc, char *buf, size_t size,
                      uint32_t vendor_id, uint32_t device_id , uint32_t class_id);

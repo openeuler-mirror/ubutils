@@ -188,7 +188,9 @@ struct lsub_cmd_param {
     uint32_t bi_eid;
     /* selected items */
     uint8_t cfg0_slice[MAX_SLICE];
+    uint8_t cfg1_slice[MAX_SLICE];
     uint8_t cfg0_slice_count;
+    uint8_t cfg1_slice_count;
 };
 
 struct ub_guid {
