@@ -1,0 +1,88 @@
+.TH setub 8 "@TODAY@" "@VERSION@" "The UB Utilities"
+.SH NAME
+setub \- configure UB entities
+.SH SYNOPSIS
+.B setub
+.RB [ options ]
+.B entities
+.BR operations ...
+
+.SH DESCRIPTION
+.PP
+.B setub
+is a utility for querying/configuring UB entities and operating bus instance.
+All numbers are entered in hexadecimal notation.
+
+.SH OPTIONS
+
+.SS General options
+.TP
+.B -h
+Show detailed help on available options. This option should be used stand-alone.
+.TP
+.B -b <operate>
+Setub supports four options for operating the Bus instance: create,
+destroy, bind and unbind.
+.TP
+.B -s (<entity_num> <reg>[=<value>]*)*
+Write or read configuration space value of selected entity.
+
+.SH SELECTION
+.PP
+Before starting each operation sequence, you must select the entity that the operation will affect.
+.TP
+.B -s (<entity_num> <reg>[=<value>]*)*
+Select reg with specified entity_num.
+.TP
+.B -g <bus instance guid>
+Select bus instance which will be operated with guid.
+GUID format is vendor-device-version-type-rsvd-seq_num.
+.TP
+.B -d <entity guid>
+Select entity which will be operated with guid.
+guid format is vendor-device-version-type-rsvd-seq_num.
+.TP
+.B -e <eid>
+If operation is "create", setub can fill bus instance eid with -e <eid>.
+.TP
+.B -u <upi>
+If operation is "create", setub can fill bus instance upi with -u <upi>.
+
+
+.SH OPERATIONS
+.PP
+There are two kinds of operations: read and write. To read a register, just specify
+its reg. Writes have the form
+.IR reg = value
+
+.PP
+There are several ways to identify a register:
+.IP \(bu
+Usually the registers are part of a UB capability, you can specify the name of the
+capability to get the address of the register, and take its address in hexadecimal.
+.IP \(bu
+To choose how many bytes (1, 2, or 4) should be transferred, you should append a width
+specifier \fB.B\fP, \fB.W\fP, or \fB.L\fP.
+
+.SH
+EXAMPLES
+
+.TP
+.B setub -s 00001 0x48.L
+Read the register value which entity number is 00001, and show the value with 4 bytes.
+.TP
+.B setub -s 00001 0x48.L=1
+Write 1 to the register which entity number is 00001.
+.TP
+.B setub -b create -g cc08-a000-a-0-000000-0000000000000002
+Create bus instance which guid is cc08-a000-a-0-000000-0000000000000002.
+.TP
+.B setub -b create -g cc08-a000-a-0-000000-0000000000000002 -e 10001 -u 7ff
+Create bus instance which guid is cc08-a000-a-0-000000-0000000000000002,
+eid is 0x10001 and upi is 0x7ff.
+
+.SH SEE ALSO
+.BR lsub (8)
+
+.SH AUTHOR
+The UB Utilities are maintained by Anzhe Li <lianzhe1@huawei.com>.
