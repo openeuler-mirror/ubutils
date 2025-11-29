@@ -1,0 +1,96 @@
+.TH lsub 8 "@TODAY@" "@VERSION@" "The UB Utilities"
+.SH NAME
+lsub \- list all UB entities
+.SH SYNOPSIS
+.B lsub
+.RB [ options ]
+.SH DESCRIPTION
+.B lsub
+is a utility for displaying information about UB buses in the system and
+entities connected to them.
+
+By default, it shows a brief list of entities. Use the options described
+below to request either a more verbose output or output intended for
+parsing by other programs.
+
+.SH OPTIONS
+
+.SS Basic display modes
+.TP
+.B -h
+Show detailed help on available options. This option should be used stand-alone.
+.TP
+.B -t
+Show a topo-like diagram containing all entities, ports and connections between them.
+.TP
+.B -l
+Show UB entities list. This list can display the connection between MUE(management UB entity) and
+UB entities which are using the share resources from MUE.
+.TP
+.B -b <-E <eid>>
+Show specific UB bus instance by EID or print bus instance list by default.
+.TP
+.B -r <cna>
+Show UB Entity routing table by the specified CNA.
+
+.SS Display options
+.TP
+.B -v
+Be verbose and display detailed information about all entities.
+.TP
+.B -k
+Show kernel drivers handling each entity.
+.TP
+.B -x
+Show hexadecimal dump of the standard part of the configuration space.
+
+.SS Options to control resolving ID's to names
+.TP
+.B -n
+Show UB vendor ID, device ID and class code as numeric.
+
+.SS Options for selection of entities
+.TP
+.B -s [[<cfg0|cfg1|port>:]<slice_id>][,[<slice_id>]]
+Show informations about specified slices.
+Slices contain cfg0, cfg1 or port. Slice_id are numbered from 0 to 255.
+For example, "0" shows the basic configuration space,
+"1" means capability configuration space 1 of selected entity,
+"0,1" show both basic and cap1 register.
+
+.SS Other options
+.TP
+.B -i <file>
+Use
+.B
+<file>
+as the UB ID list instead of @IDSDIR@/ub.ids.
+.TP
+.B -e <entity_num>
+Display the entity with the specified
+.B
+<entity_num>
+.TP
+.B -p <port>
+Display the entity with the specified
+.B
+<entity_num>
+and
+.B
+<port>
+.TP
+.B -E <eid>
+Display the bus instance with the specified
+.B
+<entity_num>
+
+.SH FILES
+.TP
+.B @IDSDIR@/ub.ids
+A list of all known UB ID's (vendors, devices and classes)..
+
+.SH SEE ALSO
+.BR setub (8)
+
+.SH AUTHOR
+The UB Utilities are maintained by Anzhe Li <lianzhe1@huawei.com>.
