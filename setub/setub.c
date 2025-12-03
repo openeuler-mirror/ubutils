@@ -123,6 +123,7 @@ static int parse_value(char *base, struct option *op)
         parse_err("value \"%s\" out of range", base);
         return -EINVAL;
     }
+    op->value = num;
 
     return 0;
 }
@@ -592,6 +593,11 @@ int main(int argc, char **argv)
     struct ub_access *uacc;
     int ret;
 
+    if (argc == 2 && !strcmp(argv[1], "--version")) {
+    	puts("setub version "UBUTILS_VERSION);
+	return 0;
+    }
+
     uacc = ub_alloc_acc();
     if (!uacc) {
         return -ENOMEM;
@@ -627,3 +633,4 @@ err_ub_cleanup:
 
     return ret;
 }
+
