@@ -1,37 +1,104 @@
-# ubutils
+# 📌 Introduction
 
-#### 介绍
-An UB device information qeuery and configuration tool.
-
-#### 软件架构
-软件架构说明
-
-
-#### 安装教程
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 使用说明
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+Ubutils is the basic DFX tool of ubus, including setub, lsub and ub.ids.
+The setub module is normally used to configure and query the configuration space of the ub protocol.
+The lsub module is normally used to query ub entity information and entity topology.
+The ub.ids identify the entity on the UB bus through a combination of a vendor ID, class code and device
+ID. Which can translate these to a human-readable string.
 
 
-#### 特技
+# 📦 Architecture and Components
+## 1. core component(See manual pages for more details)
 
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+lsub:
+
+	provide a command-line interface to query ub entity information and entity topology by calling the
+	/sys/bus/ub/devices sysfs file.
+
+setub:
+
+	provide a command-line interface configure and query the configuration space of the ub protocol by calling the
+	/sys/bus/ub/devices sysfs file.
+
+ub.ids:
+
+	provide the translation to a human-readable string for entities on the UB bus.
+
+
+## 2. Driver dependency
+
+The ubutils depends on ubfi.ko ubus.ko hisi_ubus.ko
+
+
+# 🛠 Installation and Preparation
+## 1. Prerequisites
+Ensure that ubfi.ko ubus.ko have been loaded before using ubutils:
+
+	insmod ubfi.ko
+	insmod ubus.ko
+	insmod hisi_ubus.ko
+
+## 2. Compiling and (Un)Installing
+If you want to installing the package, you can use build.sh to install:
+
+	sudo ./build.sh install
+
+When you are bored of using ubutils, you can uninstall:
+
+	sudo ./build.sh uninstall
+
+# 🧩 code structure
+## ubutils code
+
+    ├─ README.md                  # current document
+    ├─ CMakeLists.txt             # build file
+    ├─ ub.ids                     # ids file
+    ├─ lsub.man                   # lsub manuals document
+    ├─ setub.man                  # setub manuals document
+    ├─ build.sh                   # shell for (un)installing package
+    ├─ include/
+    │   ├─ lsub-regs.h            # regs header file
+    │   └── ubutils.h             # common header file
+    ├─ lib/
+    │   ├─ common.c               # common source file
+    │   └── sysfs.c               # common source file
+    ├─ lsub/
+    │   ├─ CMakeLists.txt         # build file for lsub
+    │   ├─ lsub.c                 # lsub source file
+    │   ├─ topo.c                 # lsub source file
+    │   └── ...                   # other source files
+    ├─ setub/
+    │   ├─ kernel_headers
+    │   │   └── ubus.h            # kernel header file
+    │   ├─ setub.c                # setub source file
+    │   └── CMakeLists.txt        # build file for setub
+    └── ubutils.spec              # spec file
+
+
+# 🚀 Function and Usage
+
+- Support configuring and querying the configuration space of the ub protocol.
+- Support binding or unbinding the entity GUID and BusInstance GUID/entity EID and BusInstance.
+- Support querying ub entity information and entity topology.
+- Support displaying the vendor ID, class code and device ID of the UB entity.
+- Support viewing route information.
+- Support displaying kernel drivers handling each entity.
+- Support dispalying specific UB bus instance by EID and bus instance list.
+- Support dispalying specified ID database of entity.
+
+
+# 📦 Version and compatibility
+
+Kernel version: openeuler OLK-6.6
+
+
+# 📄 Connection and contribution
+
+Issue feedback: Submit an issue in the openeuler community
+Code contribution: Follow Huawei's kernel coding standards and submit patches via Gerrit
+
+
+# 📌 Copyright Notice
+
+Copyright (c) 2025 HiSilicon Technologies Co., Ltd. All rights reserved.
+This software is provided on an "as is" basis, without warranties of any kind, either express or implied, including but not limited to non-infringement, merchantability or fit for a particular purpose.
