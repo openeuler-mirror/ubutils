@@ -20,7 +20,7 @@
 #define INVLID_EID_MSG          "Invalid EID"
 #define INVLID_CNA_MSG          "Invalid CNA"
 #define INVLID_PORT_MSG         "Invalid PORT"
-#define INVALID_VERBOSE_MSG     "Invalid verbose"
+#define INVALID_SLICE_MSG       "Invalid SLICE"
 #define TOO_MANY_SLICE_MSG      "Too many slices, only 8 of them"
 #define DECIMAL_NUM             10
 #define LS_VERBOSE              1
@@ -197,7 +197,7 @@ static int parse_slice_context(struct lsub_cmd_param *cmd, char *cfg_str)
 
     cfg_id = parse_slice_prefix(cmd, tmp_str);
     if (cfg_id == NULL) {
-        return 0;
+        return -1;
     }
 
     /* If no slice is selected, the default slice is CFG0\CFG1\PORT BASIC. */
@@ -262,7 +262,7 @@ static const char *parse_slice(char *str)
         tmp_str = strtok_r(NULL, delim, &save_str)) {
         ret_code = parse_slice_context(&ls_cmd, tmp_str);
         if (ret_code != 0) {
-            return INVALID_VERBOSE_MSG;
+            return INVALID_SLICE_MSG;
         }
     }
 
