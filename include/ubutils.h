@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define UBUTILS_VERSION "1.0.1.rc0"
+#define UBUTILS_VERSION "1.0.1.rc1"
 #define UB_SYS_DIR_LEN 1024
 #define OBJBUFSIZE 1024
 #define OBJNAMELEN 1024
