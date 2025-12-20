@@ -1,3 +1,4 @@
+# 通知: 本项目已经正式迁移至 [AtomGit](https://atomgit.com/openeuler/ubutils) 平台
 # 📌 Introduction
 
 Ubutils is the basic DFX tool of ubus, including setub, lsub and ub.ids.
