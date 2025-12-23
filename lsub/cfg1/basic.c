@@ -40,17 +40,17 @@ static void cfg1_cap_bitmap(uint8_t *data)
     /* save CAP bitmap */
     memcpy(cfg1_info->cfg1_cap_bits, data, CFG_CAP_BITMAP_LEN);
 
-    off = sprintf(cfg1_info->display_buf, "%s", "\n\t\t\t\tCAP Bitmap: ");
+    off = sprintf(cfg1_info->display_buf, "%s", "\n\t\t\t\tCFG1_CAP Bitmap: ");
     for (i = CFG_CAP_BITMAP_LEN - 1, j = 1; i >= 0; i--, j++) {
         off += sprintf(cfg1_info->display_buf + off, "%02x", cfg1_info->cfg1_cap_bits[i]);
         if (j == (CFG_CAP_BITMAP_LEN >> 1)) {
-            off += sprintf(cfg1_info->display_buf + off, "%s", "\n\t\t\t\t            ");
+            off += sprintf(cfg1_info->display_buf + off, "%s", "\n\t\t\t\t                 ");
         } else if ((j != CFG_CAP_BITMAP_LEN) && ((j % CFG_DWORD_LEN) == 0)) {
             off += sprintf(cfg1_info->display_buf + off, "%s", "-");
         }
     }
 
-    off += sprintf(cfg1_info->display_buf + off, "\n\t\t\t\tEnabled Cfg1 Cap:\n\t\t\t\t\t");
+    off += sprintf(cfg1_info->display_buf + off, "\n\t\t\t\tEnabled Cfg1 Cap: ");
 
     for (uint8_t k = 0; k < CFG1_CAP_NUM; k++) {
         if (to_1bit(data, k)) {
@@ -129,12 +129,12 @@ static void cfg1_ers(uint8_t *data, uint8_t rs_idx)
     }
 
     ers_sa = to_uint64(data + rs_sa_pos[rs_idx] - rs_ss_pos[rs_idx]);
-    off += sprintf(cfg1_info->display_buf + off, " SA:0x%016lx", ers_sa);
+    off += sprintf(cfg1_info->display_buf + off, " SA:0x%lx", ers_sa);
 
     uba_sup = to_1bit(cfg1_info->cfg1_sup_feat, CFG_BIT5);
     if (uba_sup) {
         ers_uba = to_uint64(data + rs_uba_pos[rs_idx] - rs_ss_pos[rs_idx]);
-        off += sprintf(cfg1_info->display_buf + off, " UBA:0x%016lx", ers_uba);
+        off += sprintf(cfg1_info->display_buf + off, " UBA:0x%lx", ers_uba);
     } else {
         off += sprintf(cfg1_info->display_buf + off, "%s", " UBA-");
     }
@@ -168,7 +168,7 @@ static void cfg1_elr(uint8_t *data)
     elr_data += CFG_DWORD_LEN;
     elr_status = to_1bit(elr_data, CFG_BIT0);
     sprintf(cfg1_info->display_buf,
-        "\n\t\t\t\tELR-Ctl:%u ELR-Done:%u", elr_ctrl, elr_status);
+        "\n\t\t\t\tELR: %u\n\t\t\t\tELR done: %u", elr_ctrl, elr_status);
     printf("%s", cfg1_info->display_buf);
 }
 
@@ -178,7 +178,7 @@ static void cfg1_sys_pgs(uint8_t *data)
     uint8_t sys_pgs;
 
     sys_pgs = to_1bit(data, CFG_BIT0);
-    sprintf(cfg1_info->display_buf, "\n\t\t\t\tSys Page Granule Size: %s", sys_pgs_desp[sys_pgs]);
+    sprintf(cfg1_info->display_buf, "\n\t\t\t\tSystem page granule size: %s", sys_pgs_desp[sys_pgs]);
     printf("%s", cfg1_info->display_buf);
 }
 
@@ -191,7 +191,7 @@ static void cfg1_eid_upi_tba(uint8_t *data)
     }
 
     addr = to_uint64(data);
-    sprintf(cfg1_info->display_buf, "\n\t\t\t\tEID-UPI Table Base Addr: 0x%016lx", addr);
+    sprintf(cfg1_info->display_buf, "\n\t\t\t\tEID_UPI Table Base Address: 0x%lx", addr);
     printf("%s", cfg1_info->display_buf);
 }
 
@@ -204,7 +204,7 @@ static void cfg1_eid_upi_ten(uint8_t *data)
     }
 
     num = to_uint32(data);
-    sprintf(cfg1_info->display_buf, "\n\t\t\t\tEID-UPI Table Entry Num: %u", num);
+    sprintf(cfg1_info->display_buf, "\n\t\t\t\tEID_UPI Table Entry Num: %u", num);
     printf("%s", cfg1_info->display_buf);
 }
 
@@ -214,7 +214,7 @@ static void cfg1_class_code(uint8_t *data)
 
     class_code = to_uint16(data);
 
-    sprintf(cfg1_info->display_buf, "\n\t\t\t\tClass Code:0x%04x", class_code);
+    sprintf(cfg1_info->display_buf, "\n\t\t\t\tClass Code:0x%x", class_code);
     printf("%s", cfg1_info->display_buf);
 }
 
@@ -223,7 +223,7 @@ static void cfg1_dev_token_id(uint8_t *data)
     uint32_t token_id;
 
     token_id = (uint32_t)to_chunkbits(data, CFG_BIT0, CFG_BIT19);
-    sprintf(cfg1_info->display_buf, "\n\t\t\t\tDev token id: 0x%05x", token_id);
+    sprintf(cfg1_info->display_buf, "\n\t\t\t\tDEV_TOKEN_ID: 0x%x", token_id);
     printf("%s", cfg1_info->display_buf);
 }
 
@@ -232,7 +232,7 @@ static void cfg1_bus_en(uint8_t *data)
     uint8_t en;
 
     en = to_1bit(data, CFG_BIT0);
-    sprintf(cfg1_info->display_buf, "\n\t\t\t\tBus access En%s", bit_parser(en));
+    sprintf(cfg1_info->display_buf, "\n\t\t\t\tbus_access_en%s", bit_parser(en));
     printf("%s", cfg1_info->display_buf);
 }
 
@@ -241,7 +241,7 @@ static void cfg1_ers_access_en(uint8_t *data)
     uint8_t en;
 
     en = to_1bit(data, CFG_BIT0);
-    sprintf(cfg1_info->display_buf, "\n\t\t\t\tERS Access Enable%s", bit_parser(en));
+    sprintf(cfg1_info->display_buf, "\n\t\t\t\tERS_access_en%s", bit_parser(en));
     printf("%s", cfg1_info->display_buf);
 }
 

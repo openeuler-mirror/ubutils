@@ -16,6 +16,10 @@ static struct val_desc eq_desc[] = { { 0x0, "Full_EQ" },
                                      { 0x1, "Only_Highest_Data_Rate_EQ" },
                                      { 0x2, "Skip_EQ" },
                                      { INVALID_DESC, "" } };
+static struct val_desc link_speed_desc[] = { { 0x0, "Data_Rate0"}, { 0x1, "Data_Rate1"}, { 0x2, "Data_Rate2"},
+                                             { 0x3, "Data_Rate3"}, { 0x4, "Data_Rate4"}, { 0x5, "Data_Rate5"},
+                                             { 0x6, "Data_Rate6"}, { 0x7, "Data_Rate7"}, { 0x8, "Data_Rate8"},
+                                             { 0x9, "Data_Rate9"}, { INVALID_DESC, "" } };
 static struct val_desc width_desc[] = { { 0x0, "Reserved"}, { 0x1, "x1" }, { 0x2, "x2" }, { 0x4, "x4" },
                                         { 0x8, "x8" }, { INVALID_DESC, "" } };
 static struct val_desc retry_ack_desc[] = { { 0x0, "NORMAL" }, { 0x1 , "ACK" },
@@ -27,9 +31,9 @@ static struct val_desc link_desc[] = { { 0x0, "DLL_DISABLE"}, { 0x1, "DLL_PARA_I
 
 #define PORT_VECTOR_SIZE 10
 static const char *bit_num[CFG_1BYTE_BITS] = { "1", "2", "4", "8", "16", "32", "64", "128" };
-static const char *mult_num[] = { "Data Rate0", "Data Rate1", "Data Rate2", "Data Rate3",
-                                  "Data Rate4", "Data Rate5", "Data Rate6", "Data Rate7",
-                                  "Data Rate8", "Data Rate9" };
+static const char *mult_num[] = { "Rate0", "Rate1", "Rate2", "Rate3",
+                                  "Rate4", "Rate5", "Rate6", "Rate7",
+                                  "Rate8", "Rate9" };
 static const char *fec_mode[CFG_1BYTE_BITS] = { "X1", "X2", "X4", "X8", "RSVD", "RSVD", "RSVD", "RSVD" };
 
 /*
@@ -74,7 +78,9 @@ static void pl_data_cap1(uint8_t *data)
 
     tmp0 = to_chunkbits(cur_data, CFG_BIT0, CFG_BIT15);
     btmp0 = to_1bit(cur_data, CFG_BIT16);
-    off = sprintf(port_info->display_buf, "\n\t\t\t\tFEATURE_ID:0x%x RXBUF_VL_SHARE_pro%s", (uint32_t)tmp0,
+    off = sprintf(port_info->display_buf,
+                  "\n\t\t\tData Link Capability 1:"
+                  "\n\t\t\t\tFEATURE_ID:0x%x\n\t\t\t\tRXBUF_VL_SHARE_pro%s", (uint32_t)tmp0,
                   bit_parser(btmp0));
     cur_data += CFG_DWORD_LEN;
 
@@ -104,7 +110,7 @@ static void pl_data_cap1(uint8_t *data)
     tmp1 = to_chunkbits(cur_data, CFG_BIT16, CFG_BIT23);
     tmp2 = to_chunkbits(cur_data, CFG_BIT24, CFG_BIT31);
     off += sprintf(port_info->display_buf + off,
-                   "\n\t\t\t\tVL_ENABLE_pro:0x%x FLOW_CTRL_SIZE_pro:%s"
+                   "\n\t\t\t\tVL_ENABLE_pro:0x%x\n\t\t\t\tFLOW_CTRL_SIZE_pro:%s"
                    "\n\t\t\t\tPACKET_MIN_INTERVAL:0x%x",
                    (uint16_t)tmp0, get_bit_mult_desc((uint8_t *)&tmp1, CFG_1BYTE_BITS, bit_num),
                    (uint16_t)tmp2);
@@ -139,8 +145,9 @@ static void pl_phy_cap1(uint8_t *data)
     btmp1 = to_1bit(cur_data, CFG_BIT29);
 
     off = sprintf(port_info->display_buf,
-                  "\n\t\t\t\tMax Link Speed:Data Rate%u Maximum Link Width:%s",
-                  tmp0, get_description(tmp1, width_desc));
+                  "\n\t\t\tPHY Link Capability 1:"
+                  "\n\t\t\t\tMax Link Speed:%s\n\t\t\t\tMaximum Link Width:%s",
+                  get_description(tmp0, link_speed_desc), get_description(tmp1, width_desc));
     off += sprintf(port_info->display_buf + off, "\n\t\t\t\tPHY Mode support:%s",
                    get_bit_mult_desc(&tmp2, CFG_BIT2, phy_mult_desc));
     off += sprintf(port_info->display_buf + off,
@@ -150,7 +157,7 @@ static void pl_phy_cap1(uint8_t *data)
                    "\n\t\t\t\tEQ Mode support:%s",
                    get_bit_mult_desc(&tmp4, CFG_BIT3, eq_mult_desc));
     off += sprintf(port_info->display_buf + off,
-                   "\n\t\t\t\tOver fibre support%s Fix data rate mode support%s",
+                   "\n\t\t\t\tOver fibre support%s\n\t\t\t\tFix data_Rate mode support%s",
                    bit_parser(btmp0), bit_parser(btmp1));
 
     printf("%s", port_info->display_buf);
@@ -164,7 +171,9 @@ static void pl_phy_cap2(uint8_t *data)
     cur_data = data + PL_PHY_CAP2;
 
     tmp0 = (uint16_t)to_chunkbits(cur_data, CFG_BIT0, CFG_BIT15);
-    sprintf(port_info->display_buf, "\n\t\t\t\tSupported Link Speeds Vector:%s",
+    sprintf(port_info->display_buf,
+                  "\n\t\t\tPHY Link Capability 2:"
+                  "\n\t\t\t\tSupported Link Speeds Vector(Data Rate):%s",
                   get_bit_mult_desc((uint8_t *)&tmp0, PORT_VECTOR_SIZE, mult_num));
 
     printf("%s", port_info->display_buf);
@@ -182,8 +191,9 @@ static void pl_phy_cap3(uint8_t *data)
     btmp2 = to_1bit(cur_data, CFG_BIT3);
     btmp3 = (uint8_t)to_chunkbits(cur_data, CFG_BIT8, CFG_BIT15);
     sprintf(port_info->display_buf,
-        "\n\t\t\t\tAsymmetry Link support%s Precode Support NRZ%s"
-        "\n\t\t\t\tPrecode Support PAM4%s FEC Interleave Mode:%s",
+        "\n\t\t\tPHY Link Capability 3:"
+        "\n\t\t\t\tAsymmetry Link support%s\n\t\t\t\tPrecode Support NRZ%s"
+        "\n\t\t\t\tPrecode Support PAM4%s\n\t\t\t\tFEC Interleave Mode:%s",
         bit_parser(btmp0), bit_parser(btmp1),
         bit_parser(btmp2), get_bit_mult_desc((uint8_t *)&btmp3, CFG_1BYTE_BITS, fec_mode));
 
@@ -192,9 +202,6 @@ static void pl_phy_cap3(uint8_t *data)
 
 static void pl_cap(uint8_t *data)
 {
-    sprintf(port_info->display_buf, "\n\t\t\tPort Link Capability:");
-    printf("%s", port_info->display_buf);
-
     pl_data_cap1(data);
     pl_phy_cap1(data);
     pl_phy_cap2(data);
@@ -214,9 +221,11 @@ static void pl_data_cfg(uint8_t *data)
     tmp0 = to_chunkbits(cur_data, CFG_BIT0, CFG_BIT7);
     tmp1 = to_chunkbits(cur_data, CFG_BIT8, CFG_BIT15);
     btmp0 = to_1bit(cur_data, CFG_BIT16);
-    off = sprintf(port_info->display_buf, "\n\t\t\t\tDATA_ACK_GRAIN_SIZE_cfg:%sCELL",
+    off = sprintf(port_info->display_buf,
+                  "\n\t\t\tData Link Configuration:"
+                  "\n\t\t\t\tDATA_ACK_GRAIN_SIZE_cfg:%s",
                   get_bit_mult_desc((uint8_t *)&tmp0, CFG_1BYTE_BITS, bit_num));
-    off += sprintf(port_info->display_buf + off, "\n\t\t\t\tCTRL_ACK_GRAIN_SIZE_cfg:%sCELL",
+    off += sprintf(port_info->display_buf + off, "\n\t\t\t\tCTRL_ACK_GRAIN_SIZE_cfg:%s",
                    get_bit_mult_desc((uint8_t *)&tmp1, CFG_1BYTE_BITS, bit_num));
     off += sprintf(port_info->display_buf + off, "\n\t\t\t\tRXBUF_VL_SHARE_cfg%s", bit_parser(btmp0));
     cur_data += CFG_DWORD_LEN;
@@ -239,7 +248,7 @@ static void pl_data_cfg(uint8_t *data)
     tmp1 = to_chunkbits(cur_data, CFG_BIT16, CFG_BIT23);
     tmp2 = to_chunkbits(cur_data, CFG_BIT24, CFG_BIT31);
     off += sprintf(port_info->display_buf + off,
-                   "\n\t\t\t\tVL_ENABLE_cfg:0x%x FLOW_CTRL_SIZE_cfg:%s"
+                   "\n\t\t\t\tVL_ENABLE_cfg:0x%x\n\t\t\t\tFLOW_CTRL_SIZE_cfg:%s"
                    "\n\t\t\t\tPACKET_MIN_INTERVAL:0x%x",
                    (uint32_t)tmp0, get_bit_mult_desc((uint8_t *)&tmp1, CFG_1BYTE_BITS, bit_num),
                    (uint32_t)tmp2);
@@ -261,8 +270,10 @@ static void pl_data_remote_init_credit(uint8_t *data)
     int off, i;
 
     cur_data = data + PL_DRIC;
-    off = sprintf(port_info->display_buf, "\n\t\t\t\tcfg remote credit VL0~15(hex):"
-                                          "\n\t\t\t\t\t");
+    off = sprintf(port_info->display_buf,
+                  "\n\t\t\tData Link Remote Init Credit Cfg:"
+                  "\n\t\t\t\tcfg remote credit VL0~15(hex):"
+                  "\n\t\t\t\t\t");
     for (i = 0; i < PORT_VL_NUM; i++) {
         off += sprintf(port_info->display_buf + off, " %x", *(uint16_t *)cur_data);
         cur_data += CFG_WORD_LEN;
@@ -278,7 +289,8 @@ static void pl_data_retry(uint8_t *data)
 
     cur_data = data + PL_DATA_RETRY;
     tmp0 = (uint32_t)to_chunkbits(cur_data, CFG_BIT0, CFG_BIT31);
-    (void)sprintf(port_info->display_buf, "\n\t\t\t\tWait Retry Ack Timeout_L:0x%xus", tmp0);
+    (void)sprintf(port_info->display_buf,
+                  "\n\t\t\tData Link Retry Cfg:\n\t\t\t\tWait Retry Ack Timeout_L:0x%xus", tmp0);
 
     printf("%s", port_info->display_buf);
 }
@@ -292,7 +304,9 @@ static void pl_data_perf_optim(uint8_t *data)
     cur_data = data + PL_DATA_PERF_OPTIM;
     tmp0 = (uint16_t)to_chunkbits(cur_data, CFG_BIT0, CFG_BIT15);
     tmp1 = (uint16_t)to_chunkbits(cur_data, CFG_BIT16, CFG_BIT31);
-    off = sprintf(port_info->display_buf, "\n\t\t\t\tCfg Ack Return:0x%x Cfg Ack Llcrd:0x%x", tmp0, tmp1);
+    off = sprintf(port_info->display_buf,
+                  "\n\t\t\tData Link Performance Optimization Cfg:"
+                  "\n\t\t\t\tCfg Ack Return:0x%x\n\t\t\t\tCfg Ack Llcrd:0x%x", tmp0, tmp1);
 
     cur_data = data + PL_DATA_CRD_VN;
     off += sprintf(port_info->display_buf + off, "\n\t\t\t\tCfg Crd Vn Llcrd VL0~15(hex):"
@@ -320,7 +334,8 @@ static void pl_data_markerr(uint8_t *data)
     cur_data = data + PL_DATA_MKERR;
 
     btmp0 = to_1bit(cur_data, CFG_BIT0);
-    sprintf(port_info->display_buf, "\n\t\t\t\tCfg MarkErr En%s", bit_parser(btmp0));
+    sprintf(port_info->display_buf,
+            "\n\t\t\tData Link MarkErr Cfg:\n\t\t\t\tCfg MarkErr En%s", bit_parser(btmp0));
 
     printf("%s", port_info->display_buf);
 }
@@ -336,15 +351,15 @@ static void pl_phy_ctrl1(uint8_t *data)
 
     cur_data = data + PL_PHY_CTRL1;
     tmp0 = to_chunkbits(cur_data, CFG_BIT0, CFG_BIT3);
-    if (tmp0 >= PORT_VECTOR_SIZE) {
-        off = sprintf(port_info->display_buf, "\n\t\t\t\tTarget Link Speed:%s", CFG_RESERVED);
-    } else {
-        off = sprintf(port_info->display_buf, "\n\t\t\t\tTarget Link Speed:Data Rate%u", (uint32_t)tmp0);
-    }
+
+    off = sprintf(port_info->display_buf,
+                  "\n\t\t\tPHY Link Control 1:\n\t\t\t\tTarget Link Speed:%s",
+                  get_description(tmp0, link_speed_desc));
 
     tmp0 = to_chunkbits(cur_data, CFG_BIT8, CFG_BIT13);
     tmp1 = to_chunkbits(cur_data, CFG_BIT16, CFG_BIT21);
-    off += sprintf(port_info->display_buf + off, "\n\t\t\t\ttarget link width: tx:%s rx:%s",
+    off += sprintf(port_info->display_buf + off,
+                   "\n\t\t\t\tTarget TX Link Width:%s\n\t\t\t\tTarget RX Link Width:%s",
                    get_description(tmp0, width_desc), get_description(tmp1, width_desc));
 
     btmp0 = to_1bit(cur_data, CFG_BIT22);
@@ -371,22 +386,23 @@ static void pl_phy_ctrl2(uint8_t *data)
     cur_data = data + PL_PHY_CTRL2;
 
     tmp0 = to_chunkbits(cur_data, CFG_BIT4, CFG_BIT5);
-    off = sprintf(port_info->display_buf, "\n\t\t\t\tEQ Mode control:%s", get_description(tmp0, eq_desc));
+    off = sprintf(port_info->display_buf,
+                  "\n\t\t\tPHY Link Control 2:\n\t\t\t\tEQ Mode control:%s",
+                  get_description(tmp0, eq_desc));
 
     btmp0 = to_1bit(cur_data, CFG_BIT6);
     btmp1 = to_1bit(cur_data, CFG_BIT7);
     off += sprintf(port_info->display_buf + off,
-                   "\n\t\t\t\tDe-emphasis value:%s"
-                   "\n\t\t\t\tPerform Equalization%s",
-                   btmp0 ? "-6dB" : "-3.5dB",
-                   bit_parser(btmp1));
+                   "\n\t\t\t\tDe-emphasis value:%s\n\t\t\t\tPerform Equalization%s",
+                   btmp0 ? "-6dB" : "-3.5dB", bit_parser(btmp1));
 
     btmp0 = to_1bit(cur_data, CFG_BIT16);
     btmp1 = to_1bit(cur_data, CFG_BIT17);
     btmp2 = to_1bit(cur_data, CFG_BIT18);
     off += sprintf(port_info->display_buf + off,
-        "\n\t\t\t\tOver fibre mode Enable%s Fix data rate mode Enable%s Bypass Probe Enable%s",
-        bit_parser(btmp0), bit_parser(btmp1), bit_parser(btmp2));
+        "\n\t\t\t\tOver fibre mode Enable%s\n\t\t\t\tFix data_Rate mode Enable%s"
+        "\n\t\t\t\tBypass Probe Enable%s", bit_parser(btmp0),
+        bit_parser(btmp1), bit_parser(btmp2));
 
     btmp0 = to_1bit(cur_data, CFG_BIT19);
     off += sprintf(port_info->display_buf + off, "\n\t\t\t\tPort Type Nego Enable%s", bit_parser(btmp0));
@@ -405,7 +421,8 @@ static void pl_phy_ctrl5(uint8_t *data)
     cur_data = data + PL_PHY_CTRL5;
 
     tmp0 = to_chunkbits(cur_data, CFG_BIT16, CFG_BIT31);
-    sprintf(port_info->display_buf, "\n\t\t\t\tPrecode Enable Vector:%s",
+    sprintf(port_info->display_buf,
+                   "\n\t\t\tPHY Link Control 5:\n\t\t\t\tPrecode Enable Vector:%s",
                    get_bit_mult_desc((uint8_t *)&tmp0, PORT_VECTOR_SIZE, mult_num));
 
     printf("%s", port_info->display_buf);
@@ -418,10 +435,10 @@ static void pl_phy_ctrl6_7(uint8_t *data)
     int off = 0, i;
 
     cur_data = data + PL_PHY_CTRL6;
-
+    off = sprintf(port_info->display_buf, "\n\t\t\tPHY Link Control 6 and 7:");
     for (i = 0; i <= PORT_RATE_SIZE; i++) {
         tmp0 = to_chunkbits(cur_data, (uint8_t)(CFG_BIT0 + i * CFG_BIT4), (uint8_t)(CFG_BIT3 + i * CFG_BIT4));
-        off += sprintf(port_info->display_buf + off, "\n\t\t\t\tFEC Mode for Data rate%d:%s", i,
+        off += sprintf(port_info->display_buf + off, "\n\t\t\t\tFEC Mode for Data_Rate%d:%s", i,
                        get_description(tmp0, fec_desc));
     }
 
@@ -436,10 +453,10 @@ static void pl_phy_ctrl8_9(uint8_t *data)
     uint8_t i;
 
     cur_data = data + PL_PHY_CTRL8;
-
+    off = sprintf(port_info->display_buf, "\n\t\t\tPHY Link Control 8 and 9:");
     for (i = 0; i <= PORT_RATE_SIZE; i++) {
         tmp0 = to_chunkbits(cur_data, (uint8_t)(CFG_BIT0 + i * CFG_BIT4), (uint8_t)(CFG_BIT3 + i * CFG_BIT4));
-        off += sprintf(port_info->display_buf + off, "\n\t\t\t\tBCRC Mode for Data rate%d:%s", i,
+        off += sprintf(port_info->display_buf + off, "\n\t\t\t\tBCRC Mode for Data_Rate%d:%s", i,
                        get_description(tmp0, bcrc_desc));
     }
 
@@ -454,7 +471,8 @@ static void pl_phy_ctrl10(uint8_t *data)
     cur_data = data + PL_PHY_CTRL10;
     tmp0 = to_chunkbits(cur_data, CFG_BIT0, CFG_BIT15);
 
-    sprintf(port_info->display_buf, "\n\t\t\t\tFEC Interleave Enable Vector:%s",
+    sprintf(port_info->display_buf,
+                  "\n\t\t\tPHY Link Control 10:\n\t\t\t\tFEC Interleave Enable Vector:%s",
                   get_bit_mult_desc((uint8_t *)&tmp0, PORT_VECTOR_SIZE, mult_num));
     printf("%s", port_info->display_buf);
 }
@@ -467,16 +485,14 @@ static void pl_phy_ctrl11(uint8_t *data)
     cur_data = data + PL_PHY_CTRL11;
     tmp0 = to_chunkbits(cur_data, CFG_BIT0, CFG_BIT15);
 
-    sprintf(port_info->display_buf, "\n\t\t\t\tSkip EQ Coarsetune Enable:%s",
+    sprintf(port_info->display_buf,
+                  "\n\t\t\tPHY Link Control 11:\n\t\t\t\tSkip EQ Coarsetune Enable:%s",
                   get_bit_mult_desc((uint8_t *)&tmp0, PORT_VECTOR_SIZE, mult_num));
     printf("%s", port_info->display_buf);
 }
 
 static void pl_config(uint8_t *data)
 {
-    sprintf(port_info->display_buf, "\n\t\t\tPort Link Configuration:");
-    printf("%s", port_info->display_buf);
-
     pl_data_cfg(data);
     pl_data_remote_init_credit(data);
     pl_data_retry(data);
@@ -503,7 +519,10 @@ static void pl_data_status(uint8_t *data)
     cur_data = data + PL_DATA_STATUS;
 
     btmp0 = to_1bit(cur_data, CFG_BIT0);
-    off = sprintf(port_info->display_buf, "\n\t\t\t\tRXBUF_VL_SHARE_pro_sta%s", bit_parser(btmp0));
+    off = sprintf(port_info->display_buf,
+                  "\n\t\t\tData Link Status:"
+                  "\n\t\t\t\tRXBUF_VL_SHARE_pro_sta%s",
+                  bit_parser(btmp0));
     cur_data += CFG_DWORD_LEN;
 
     tmp0 = to_chunkbits(cur_data, CFG_BIT0, CFG_BIT7);
@@ -532,7 +551,7 @@ static void pl_data_status(uint8_t *data)
     tmp1 = to_chunkbits(cur_data, CFG_BIT16, CFG_BIT23);
     tmp2 = to_chunkbits(cur_data, CFG_BIT24, CFG_BIT31);
     off += sprintf(port_info->display_buf + off,
-                   "\n\t\t\t\tVL_ENABLE_pro_sta:0x%x FLOW_CTRL_SIZE_pro_sta:%s"
+                   "\n\t\t\t\tVL_ENABLE_pro_sta:0x%x\n\t\t\t\tFLOW_CTRL_SIZE_pro_sta:%s"
                    "\n\t\t\t\tPACKET_MIN_INTERVAL_sta:0x%x",
                    (uint32_t)tmp0, get_bit_mult_desc((uint8_t *)&tmp1, CFG_1BYTE_BITS, bit_num),
                    (uint32_t)tmp2);
@@ -555,10 +574,10 @@ static void pl_dlsms(uint8_t *data)
     tmp1 = to_chunkbits(cur_data, CFG_BIT4, CFG_BIT7);
     tmp2 = to_chunkbits(cur_data, CFG_BIT8, CFG_BIT11);
     sprintf(port_info->display_buf,
-        "\n\t\t\t\tLink Status:%s Retry Req Status:%s Retry Ack Status:%s",
-        get_description(tmp0, link_desc),
-        get_description(tmp1, retry_req_desc),
-        get_description(tmp2, retry_ack_desc));
+            "\n\t\t\tData Link State Machine Status:"
+            "\n\t\t\t\tLink Status:%s\n\t\t\t\tRetry Req Status:%s"
+            "\n\t\t\t\tRetry Ack Status:%s", get_description(tmp0, link_desc),
+            get_description(tmp1, retry_req_desc), get_description(tmp2, retry_ack_desc));
 
     printf("%s", port_info->display_buf);
 }
@@ -573,8 +592,9 @@ static void pl_port_status(uint8_t *data)
     btmp0 = to_1bit(cur_data, CFG_BIT0);
     btmp1 = to_1bit(cur_data, CFG_BIT1);
     sprintf(port_info->display_buf,
-        "\n\t\t\t\tPhy Link state:%s Data Link Layer Link State:%s",
-        btmp0 ? "Up" : "Down", btmp1 ? "DLL_Normal" : "Others");
+            "\n\t\t\tPort Link Status 0:"
+            "\n\t\t\t\tPHY Link state:%s\n\t\t\t\tData Link Layer Link State:%s",
+            btmp0 ? "Up" : "Down", btmp1 ? "DLL_Normal" : "Others");
 
     printf("%s", port_info->display_buf);
 }
@@ -592,14 +612,15 @@ static void pl_phy_status1(uint8_t *data)
     tmp1 = to_chunkbits(cur_data, CFG_BIT4, CFG_BIT8);
     tmp2 = to_chunkbits(cur_data, CFG_BIT12, CFG_BIT16);
     off = sprintf(port_info->display_buf,
-        "\n\t\t\t\tCurrent Link Speed:%s Current TX Link Width:%s Current RX Link Width:%s",
-        tmp0 < PORT_VECTOR_SIZE ? mult_num[tmp0] : CFG_RESERVED, get_description(tmp1, width_desc),
-        get_description(tmp2, width_desc));
+                  "\n\t\t\tPHY Link Status 1:"
+                  "\n\t\t\t\tCurrent Link Speed:%s\n\t\t\t\tCurrent TX Link Width:%s"
+                  "\n\t\t\t\tCurrent RX Link Width:%s", get_description(tmp0, link_speed_desc),
+                  get_description(tmp1, width_desc), get_description(tmp2, width_desc));
 
     tmp0 = to_chunkbits(cur_data, CFG_BIT20, CFG_BIT25);
     btmp0 = to_1bit(cur_data, CFG_BIT28);
     off += sprintf(port_info->display_buf + off,
-        "\n\t\t\t\tCur LMSM State:0x%x Current port type:%s",
+        "\n\t\t\t\tCurrent LMSM State:0x%x\n\t\t\t\tCurrent Port Type:%s",
         (uint32_t)tmp0, btmp0 ? "Primary port" : "Secondary port");
 
     printf("%s", port_info->display_buf);
@@ -616,21 +637,25 @@ static void pl_phy_status2(uint8_t *data)
 
     btmp0 = to_1bit(cur_data, CFG_BIT2);
     btmp1 = to_1bit(cur_data, CFG_BIT3);
-    off = sprintf(port_info->display_buf, "\n\t\t\t\tCurrent precode state: TX%s RX%s", bit_parser(btmp0),
-                   bit_parser(btmp1));
+    off = sprintf(port_info->display_buf,
+                  "\n\t\t\tPHY Link Status 2:"
+                  "\n\t\t\t\tCurrent Precode State: TX%s RX%s",
+                  bit_parser(btmp0), bit_parser(btmp1));
 
     tmp0 = to_chunkbits(cur_data, CFG_BIT4, CFG_BIT7);
     tmp1 = to_chunkbits(cur_data, CFG_BIT8, CFG_BIT11);
     tmp2 = to_chunkbits(cur_data, CFG_BIT12, CFG_BIT15);
     off += sprintf(port_info->display_buf + off,
-        "\n\t\t\t\tCurrent FEC Mode: %s"
-        "\n\t\t\t\tCurrent EQ Mode: %s"
-        "\n\t\t\t\tCurrent BCRC Mode: %s",
-        get_description(tmp0, fec_desc), get_description(tmp1, eq_desc),
-        get_description(tmp2, bcrc_desc));
+                   "\n\t\t\t\tCurrent FEC Mode:%s"
+                   "\n\t\t\t\tCurrent EQ Mode:%s"
+                   "\n\t\t\t\tCurrent BCRC Mode:%s",
+                   get_description(tmp0, fec_desc), get_description(tmp1, eq_desc),
+                   get_description(tmp2, bcrc_desc));
 
     btmp0 = to_1bit(cur_data, CFG_BIT16);
-    off += sprintf(port_info->display_buf + off, "\n\t\t\t\tCurrent FEC Interleave state%s", bit_parser(btmp0));
+    off += sprintf(port_info->display_buf + off,
+                   "\n\t\t\t\tCurrent FEC Interleave state%s",
+                   bit_parser(btmp0));
 
     printf("%s", port_info->display_buf);
 }
@@ -641,7 +666,7 @@ static void pl_phy_status3(uint8_t *data)
 
     cur_data = data + PL_PHY_STATUS3;
 
-    sprintf(port_info->display_buf, "\n\t\t\t\tPHY Link Status 3:0x%x", *((uint32_t *)cur_data));
+    sprintf(port_info->display_buf, "\n\t\t\tPHY Link Status 3:0x%x", *((uint32_t *)cur_data));
 
     printf("%s", port_info->display_buf);
 }
@@ -655,7 +680,9 @@ static void pl_phy_err_status(uint8_t *data)
 
     btmp0 = to_1bit(cur_data, CFG_BIT0);
     btmp1 = to_1bit(cur_data, CFG_BIT1);
-    sprintf(port_info->display_buf, "\n\t\t\t\tDeskew_buf_overflow%s Ebch decode err%s",
+    sprintf(port_info->display_buf,
+            "\n\t\t\tPHY Link Error status:"
+            "\n\t\t\t\tDeskew_buf_overflow%s Ebch decode err%s",
             bit_parser(btmp0), bit_parser(btmp1));
 
     printf("%s", port_info->display_buf);
@@ -663,9 +690,6 @@ static void pl_phy_err_status(uint8_t *data)
 
 static void pl_status(uint8_t *data)
 {
-    sprintf(port_info->display_buf, "\n\t\t\tPort Link Status:");
-    printf("%s", port_info->display_buf);
-
     pl_data_status(data);
     pl_dlsms(data);
     /* Skip Data Link status Reserve 1/2/3/4 */
@@ -684,7 +708,7 @@ void port_cap1_link(uint8_t *data, uint32_t data_len)
 
     slice_ver = slice_get_version(data);
     slice_size = slice_get_size(data);
-    sprintf(port_info->display_buf, "\n\t\tport cap1 link: slice[0x%x, 0x%x] id[%u]", slice_ver, slice_size,
+    sprintf(port_info->display_buf, "\n\t\tPORT_CAP1_LINK: slice[0x%x, 0x%x] id[%u]", slice_ver, slice_size,
             port_cap_id);
     printf("%s", port_info->display_buf);
 

@@ -27,7 +27,7 @@ void port_cap15_qdlws(uint8_t *data, uint32_t data_len)
 
     slice_ver = slice_get_version(data);
     slice_size = slice_get_size(data);
-    sprintf(port_info->display_buf, "\n\t\tport QDLWS: slice[0x%x, 0x%x] id[%u]", slice_ver, slice_size, port_cap_id);
+    sprintf(port_info->display_buf, "\n\t\tPORT_CAP15_QDLWS: slice[0x%x, 0x%x] id[%u]", slice_ver, slice_size, port_cap_id);
     printf("%s", port_info->display_buf);
 
     if (slice_size < PQDLWS_LEN || data_len < PQDLWS_LEN) {
@@ -36,20 +36,23 @@ void port_cap15_qdlws(uint8_t *data, uint32_t data_len)
 
     cur_data = data + PQDLWS_CAP;
     btmp0 = to_1bit(cur_data, CFG_BIT0);
-    off = sprintf(port_info->display_buf, "\n\t\t\t\tAsymmetry Link width change support%s", bit_parser(btmp0));
+    off = sprintf(port_info->display_buf,
+                  "\n\t\t\tQDLWS Capability:\n\t\t\t\tAsymmetry Link width change support%s",
+                  bit_parser(btmp0));
 
     cur_data = data + PQDLWS_CTRL;
     btmp0 = to_1bit(cur_data, CFG_BIT0);
     btmp1 = to_1bit(cur_data, CFG_BIT1);
     btmp2 = to_1bit(cur_data, CFG_BIT2);
     off += sprintf(port_info->display_buf + off,
-                   "\n\t\t\t\tGlobal Enable for QDLWS%s TX QDLWS%s RX QDLWS%s",
+                   "\n\t\t\tQDLWS Control:"
+                   "\n\t\t\t\tGlobal Enable for QDLWS%s TX QDLWS Enable%s RX QDLWS Enable%s",
                    bit_parser(btmp0), bit_parser(btmp1), bit_parser(btmp2));
 
     cur_data = data + PQDLWS_STA;
     tmp0 = to_chunkbits(cur_data, CFG_BIT0, CFG_BIT2);
     off += sprintf(port_info->display_buf + off,
-                   "\n\t\t\t\tQDLWS Execution status:%s",
+                   "\n\t\t\tQDLWS State:\n\t\t\t\tQDLWS Execution status:%s",
                    get_description(tmp0, qdlws_desc));
 
     printf("%s", port_info->display_buf);

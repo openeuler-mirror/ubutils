@@ -29,8 +29,9 @@ static void cfg0_shp_cap_capability(uint16_t slot_num, uint8_t *data, char *disp
     end_port = to_uint16(slot_data);
 
     sprintf(display_buf,
-        "\n\t\t\t\tSlot%u Cap: PPS%s WLPS%s PLPS%s PDSS%s PWCS%s"
-        "\n\t\t\t\tStart-Port:%u End-Port:%u",
+        "\n\t\t\tSlot%u SHP Capability:"
+        "\n\t\t\t\tPPS%s WLPS%s PLPS%s PDSS%s PWCS%s"
+        "\n\t\t\t\tSlot Start Port Index:%u Slot End Port Index:%u",
         slot_num, bit_parser(pp_sup), bit_parser(wlp_sup), bit_parser(plp_sup),
         bit_parser(pds_sup), bit_parser(pwcs_sup), start_port, end_port);
 
@@ -58,7 +59,9 @@ static void cfg_shp_cap_control(uint16_t slot_num, uint8_t *data, char *display_
     pw_ctrl = to_1bit(slot_data, CFG_BIT0);
 
     sprintf(display_buf,
-        "\n\t\t\t\tSlot%u Ctl: PP%s WL:%s PL:%s MS%s PD%s PDS%s PW%s",
+        "\n\t\t\tSlot%u SHP Control:"
+        "\n\t\t\t\tPP_CTRL%s WL_CTRL:%s PL_CTRL:%s"
+        "\n\t\t\t\tMS_CTRL%s PD_CTRL%s PDS_CTRL%s PW_CTRL%s",
         slot_num, bit_parser(pp_ctrl), led_parse(wl_ctrl), led_parse(pl_ctrl),
         bit_parser(ms_ctrl), bit_parser(pd_ctrl), bit_parser(pds_ctrl), bit_parser(pw_ctrl));
 
@@ -78,7 +81,7 @@ static void cfg_shp_cap_status(uint16_t slot_num, uint8_t *data, char *display_b
     pdsc_sta = to_1bit(slot_data, CFG_BIT0);
 
     sprintf(display_buf,
-        "\n\t\t\t\tSlot%u Sta: PP%s PD%s PDSC%s",
+        "\n\t\t\tSlot%u SHP Status:\n\t\t\t\tPP_ST%s PD_ST%s PDSC_ST%s",
         slot_num, bit_parser(pp_sta), bit_parser(pd_sta), bit_parser(pdsc_sta));
 
     printf("%s", cfg0_info->display_buf);
@@ -96,7 +99,8 @@ void cfg0_shp_cap(uint8_t *data, uint32_t data_len)
     slice_size = slice_get_size(data);
     slot_num = to_uint16(data + SHP_SLOT_NUM);
     sprintf(cfg0_info->display_buf,
-        "\n\t\tCFG0_SHP_CAP: slice[0x%x, 0x%x] id[%d] Slot Number:%u",
+        "\n\t\tCFG0_CAP2_SHP: slice[0x%x, 0x%x] id[%d]"
+        "\n\t\t\tSlot Number:%u",
         slice_ver, slice_size, CFG0_SHP_CAP_ID, slot_num);
 
     printf("%s", cfg0_info->display_buf);
