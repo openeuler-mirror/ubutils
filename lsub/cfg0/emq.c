@@ -149,14 +149,14 @@ static inline int cor_err_con_point(uint8_t *data, char *display_buf)
     }
 
     return sprintf(display_buf,
-        "\n\t\t\t\tCorrectable Error Consumer Pointer:0x%x",
+        "\n\t\t\tCorrectable Error Consumer Pointer:0x%x",
         to_uint16(data));
 }
 
 static inline int cor_err_pro_point(uint8_t *data, char *display_buf)
 {
     return sprintf(display_buf,
-        "\n\t\t\t\tCorrectable Error Producer Pointer:0x%x",
+        "\n\t\t\tCorrectable Error Producer Pointer:0x%x",
         to_uint16(data));
 }
 
@@ -172,7 +172,7 @@ static int cor_err_info(uint8_t *data, char *display_buf)
 
     return sprintf(display_buf,
         "\n\t\t\tCorrectable Error Information:"
-        "\n\t\t\t\tCorrectable Error Source Primary CNA: 0x%06x"
+        "\n\t\t\t\tCorrectable Error Source Primary CNA: 0x%x"
         "\n\t\t\t\tCorrectable Error Source Port Index: 0x%x"
         "\n\t\t\t\tCorrectable Error Level: %s",
         tmp, tmp1, tmp2 ? "Device" : "Port");
@@ -185,14 +185,14 @@ static inline int uncor_nf_err_con_point(uint8_t *data, char *display_buf)
     }
 
     return sprintf(display_buf,
-        "\n\t\t\t\tNon-Fatal Uncorrectable Error Consumer Pointer:0x%x",
+        "\n\t\t\tNon-Fatal Uncorrectable Error Consumer Pointer:0x%x",
         to_uint16(data));
 }
 
 static inline int uncor_nf_err_pro_point(uint8_t *data, char *display_buf)
 {
     return sprintf(display_buf,
-        "\n\t\t\t\tNon-Fatal Uncorrectable Error Producer Pointer:0x%x",
+        "\n\t\t\tNon-Fatal Uncorrectable Error Producer Pointer:0x%x",
         to_uint16(data));
 }
 
@@ -208,7 +208,7 @@ static int uncor_nf_err_info(uint8_t *data, char *display_buf)
 
     return sprintf(display_buf,
         "\n\t\t\tNon-Fatal Uncorrectable Error Information:"
-        "\n\t\t\t\tNon-Fatal Uncorrectable Error Source Primary CNA: 0x%06x"
+        "\n\t\t\t\tNon-Fatal Uncorrectable Error Source Primary CNA: 0x%x"
         "\n\t\t\t\tNon-Fatal Uncorrectable Error Source Port Index: 0x%x"
         "\n\t\t\t\tNon-Fatal Uncorrectable Error Level: %s",
         tmp, tmp1, tmp2 ? "Device" : "Port");
@@ -221,14 +221,14 @@ static inline int uncor_f_err_con_point(uint8_t *data, char *display_buf)
     }
 
     return sprintf(display_buf,
-        "\n\t\t\t\tFatal Uncorrectable Error Consumer Pointer:0x%x",
+        "\n\t\t\tFatal Uncorrectable Error Consumer Pointer:0x%x",
         to_uint16(data));
 }
 
 static inline int uncor_f_err_pro_point(uint8_t *data, char *display_buf)
 {
     return sprintf(display_buf,
-        "\n\t\t\t\tFatal Uncorrectable Error Producer Pointer:0x%x",
+        "\n\t\t\tFatal Uncorrectable Error Producer Pointer:0x%x",
         to_uint16(data));
 }
 
@@ -244,7 +244,7 @@ static int uncor_f_err_info(uint8_t *data, char *display_buf)
 
     return sprintf(display_buf,
         "\n\t\t\tFatal Uncorrectable Error Information:"
-        "\n\t\t\t\tFatal Uncorrectable Error Source Primary CNA: 0x%06x"
+        "\n\t\t\t\tFatal Uncorrectable Error Source Primary CNA: 0x%x"
         "\n\t\t\t\tFatal Uncorrectable Error Source Port Index: 0x%x"
         "\n\t\t\t\tFatal Uncorrectable Error Level: %s",
         tmp, tmp1, tmp2 ? "Device" : "Port");
@@ -259,7 +259,7 @@ void cfg0_emq_cap(uint8_t *data, uint32_t data_len)
     slice_ver = slice_get_version(data);
     slice_size = slice_get_size(data);
     off = sprintf(cfg0_info->display_buf,
-        "\n\t\tCFG0_EMQ_CAP: slice[0x%x, 0x%x] id[%d]",
+        "\n\t\tCFG0_CAP5_EMQ: slice[0x%x, 0x%x] id[%d]",
         slice_ver, slice_size, CFG0_EMQ_CAP_ID);
 
     if (data_len < EMQ_LEN) {

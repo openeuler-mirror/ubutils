@@ -185,8 +185,9 @@ void port_cap21_err_record(uint8_t *data, uint32_t data_len)
 
     slice_ver = slice_get_version(data);
     slice_size = slice_get_size(data);
-    sprintf(port_info->display_buf, "\n\t\tport error record: slice[0x%x, 0x%x] id[%u]", slice_ver, slice_size,
-            port_cap_id);
+    sprintf(port_info->display_buf,
+            "\n\t\tPORT_CAP21_PORT_ERR_RECORD: slice[0x%x, 0x%x] id[%u]",
+            slice_ver, slice_size, port_cap_id);
     printf("%s", port_info->display_buf);
 
      if (data_len < PORT_ERR_RECORD_LEN) {

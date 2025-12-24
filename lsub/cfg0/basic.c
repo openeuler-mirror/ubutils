@@ -35,10 +35,10 @@ static void cfg0_port_num_and_entity_num(uint8_t *data)
         entity_num = to_uint16(data + CFG_WORD_LEN);
         cfg0_info->entity_num = entity_num;
         sprintf(cfg0_info->display_buf,
-            "\n\t\t\t\tTotal Number of Ports:%u, Total Number of Entities:%u", port_num, entity_num);
+            "\n\t\t\t\tTotal Number of Ports: %u\n\t\t\t\tTotal Number of Entities: %u", port_num, entity_num);
     } else {
         sprintf(cfg0_info->display_buf,
-            "\n\t\t\t\tTotal Number of Ports:%u", port_num);
+            "\n\t\t\t\tTotal Number of Ports: %u", port_num);
     }
 
     printf("%s", cfg0_info->display_buf);
@@ -52,17 +52,17 @@ static void cfg0_cap_bitmap(uint8_t *data)
     /* save CAP bitmap */
     memcpy(cfg0_info->cfg0_cap_bits, data, CFG_CAP_BITMAP_LEN);
 
-    off = sprintf(cfg0_info->display_buf, "%s", "\n\t\t\t\tCAP Bitmap: ");
+    off = sprintf(cfg0_info->display_buf, "%s", "\n\t\t\t\tCFG0_CAP Bitmap: ");
     for (i = CFG_CAP_BITMAP_LEN - 1, j = 1; i >= 0; i--, j++) {
         off += sprintf(cfg0_info->display_buf + off, "%02x", cfg0_info->cfg0_cap_bits[i]);
         if (j == (CFG_CAP_BITMAP_LEN >> 1)) {
-            off += sprintf(cfg0_info->display_buf + off, "%s", "\n\t\t\t\t            ");
+            off += sprintf(cfg0_info->display_buf + off, "%s", "\n\t\t\t\t                 ");
         } else if ((j != CFG_CAP_BITMAP_LEN) && ((j % CFG_DWORD_LEN) == 0)) {
             off += sprintf(cfg0_info->display_buf + off, "%s", "-");
         }
     }
 
-    off += sprintf(cfg0_info->display_buf + off, "\n\t\t\t\tEnabled Cfg0 Cap:\n\t\t\t\t\t");
+    off += sprintf(cfg0_info->display_buf + off, "\n\t\t\t\tEnabled Cfg0 Cap: ");
 
     for (uint8_t k = 0; k < CFG0_CAP_NUM; k++) {
         if (to_1bit(data, k)) {
@@ -176,7 +176,7 @@ static void cfg0_netaddr(uint8_t *data)
 
     cna = (uint32_t)to_chunkbits(data, CFG_BIT0, CFG_BIT23);
 
-    sprintf(cfg0_info->display_buf, "\n\t\t\t\tPrimary Compact Network Address: 0x%x",
+    sprintf(cfg0_info->display_buf, "\n\t\t\t\tPrimary CNA: 0x%x",
             cna);
 
     printf("%s", cfg0_info->display_buf);
@@ -187,7 +187,7 @@ static void cfg0_upi(uint8_t *data)
     uint16_t upi;
 
     upi = (uint16_t)to_chunkbits(data, CFG_BIT0, CFG_BIT14);
-    sprintf(cfg0_info->display_buf, "\n\t\t\t\tUPI: 0x%04x", upi);
+    sprintf(cfg0_info->display_buf, "\n\t\t\t\tUPI: 0x%x", upi);
 
     printf("%s", cfg0_info->display_buf);
 }
@@ -200,7 +200,7 @@ static void cfg0_module(uint8_t *data)
     module_id = (uint16_t)to_chunkbits(data, CFG_BIT0, CFG_BIT15);
     module_vendor_id = (uint16_t)to_chunkbits(data, CFG_BIT16, CFG_BIT31);
 
-    sprintf(cfg0_info->display_buf, "\n\t\t\t\tModule Vendor ID:0x%04x Module ID:0x%04x",
+    sprintf(cfg0_info->display_buf, "\n\t\t\t\tModule: Module Vendor ID:0x%x Module ID:0x%x",
             module_vendor_id, module_id);
 
     printf("%s", cfg0_info->display_buf);
@@ -216,7 +216,7 @@ static void cfg0_dev_rst(uint8_t *data)
 
     dev_rst = to_1bit(data, CFG_BIT0);
 
-    (void)sprintf(cfg0_info->display_buf, " DEV_RST: %u", dev_rst);
+    (void)sprintf(cfg0_info->display_buf, "\n\t\t\t\tDEV_RST%s", bit_parser(dev_rst));
     (void)printf("%s", cfg0_info->display_buf);
 }
 
@@ -225,7 +225,7 @@ static void cfg0_mtu(uint8_t *data)
     uint8_t mtu_cfg;
 
     mtu_cfg = (uint8_t)to_chunkbits(data, CFG_BIT0, CFG_BIT2);
-    sprintf(cfg0_info->display_buf, " MTU_CFG:%s", mtu_parser(mtu_cfg));
+    sprintf(cfg0_info->display_buf, "\n\t\t\t\tMTU_CFG: %s", mtu_parser(mtu_cfg));
     printf("%s", cfg0_info->display_buf);
 }
 
@@ -240,7 +240,7 @@ static void cfg0_cc(uint8_t *data)
     } else {
         cc_en = 0;
     }
-    sprintf(cfg0_info->display_buf, " CC_En%s", bit_parser(cc_en));
+    sprintf(cfg0_info->display_buf, "\n\t\t\t\tCC_EN%s", bit_parser(cc_en));
     printf("%s", cfg0_info->display_buf);
 }
 
@@ -253,7 +253,7 @@ static void cfg0_trust_host(uint8_t *data)
     }
 
     trust_host_en = to_1bit(data, CFG_BIT0);
-    sprintf(cfg0_info->display_buf, " Trust_En%s", bit_parser(trust_host_en));
+    sprintf(cfg0_info->display_buf, "\n\t\t\t\tTrust_EN%s", bit_parser(trust_host_en));
     printf("%s", cfg0_info->display_buf);
 }
 
@@ -274,7 +274,7 @@ static void cfg0_user_eid(uint8_t *data)
 {
     int off;
 
-    off = sprintf(cfg0_info->display_buf, "%s", "\n\t\t\t\tUser EID: ");
+    off = sprintf(cfg0_info->display_buf, "%s", "\n\t\t\t\tUEID: ");
     (void)parse_eid(data, cfg0_info->display_buf + off);
     printf("%s", cfg0_info->display_buf);
 }
@@ -284,7 +284,7 @@ static void cfg0_user_cna(uint8_t *data)
     uint32_t user_cna;
 
     user_cna = to_uint32(data);
-    sprintf(cfg0_info->display_buf, "\n\t\t\t\tUser CNA: 0x%x", user_cna);
+    sprintf(cfg0_info->display_buf, "\n\t\t\t\tUCNA: 0x%x", user_cna);
     printf("%s", cfg0_info->display_buf);
 }
 
