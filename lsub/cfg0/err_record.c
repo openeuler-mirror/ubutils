@@ -95,7 +95,7 @@ static void ctb_err_sts_and_mask(uint8_t *data, char *display_buf)
     sev_data = data + CTB_ERR_SEV - CTB_ERR_STS;
 
     off = sprintf(display_buf,
-                  "\n\t\t\tPort Correctable Error Status and Mask:"
+                  "\n\t\t\tDevice Correctable Error Status and Mask:"
                   "\n\t\t\t\tBlock Align Unlock                   Status%s Mask%s"
                   "\n\t\t\t\tElasticity Buffer Overflow/Underflow Status%s Mask%s"
                   "\n\t\t\t\tLoss of Lane-to-Lane Deskw           Status%s Mask%s"
@@ -191,7 +191,7 @@ void cfg0_err_record_cap(uint8_t *data, uint32_t data_len)
     slice_ver = slice_get_version(data);
     slice_size = slice_get_size(data);
     sprintf(cfg0_info->display_buf,
-        "\n\t\tCFG0_ERR_RECORD_CAP_ID: slice[0x%x, 0x%x] id[%d]",
+        "\n\t\tCFG0_CAP3_DEVICE_ERR_RECORD: slice[0x%x, 0x%x] id[%d]",
         slice_ver, slice_size, CFG0_ERR_RECORD_CAP_ID);
 
     (void)printf("%s", cfg0_info->display_buf);

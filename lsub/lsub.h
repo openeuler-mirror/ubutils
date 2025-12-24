@@ -287,6 +287,7 @@ enum {
     CFG_BIT48 = 48,
     CFG_BIT56 = 56,
     CFG_BIT63 = 63,
+    CFG_BIT64 = 64,
 };
 
 #define CLASS_CODE_MASK 0xff

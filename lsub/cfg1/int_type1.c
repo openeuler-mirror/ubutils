@@ -29,7 +29,7 @@ void cfg1_int_type1_cap(uint8_t *data, uint32_t data_len)
     slice_ver = slice_get_version(data);
     slice_size = slice_get_size(data);
     off = sprintf(cfg1_info->display_buf,
-        "\n\t\tCFG1_INT_TYPE1_CAP: slice[0x%x, 0x%x] id[%d]",
+        "\n\t\tCFG1_CAP3_INT_TYPE1: slice[0x%x, 0x%x] id[%d]",
         slice_ver, slice_size, CFG1_INT_TYPE1_CAP_ID);
 
     if (slice_size < CFG1_INT_TYPE1_LEN || data_len < CFG1_INT_TYPE1_LEN) {
@@ -56,14 +56,14 @@ void cfg1_int_type1_cap(uint8_t *data, uint32_t data_len)
     interrupt_pending = to_uint32(data + CFG1_INT_TYPE1_INTERRUPT_PENDING);
 
     off += sprintf(cfg1_info->display_buf + off,
-        "\n\t\t\t\tInterrupt Enable%s"
-        "\n\t\t\t\tSupported Interrupt Number: %s"
-        "\n\t\t\t\tInterrupt Enable Number: %s"
-        "\n\t\t\t\tInterrupt Data   : 0x%x"
-        "\n\t\t\t\tInterrupt Addr   : 0x%lx"
-        "\n\t\t\t\tInterrupt ID     : %u"
-        "\n\t\t\t\tInterrupt Mask   : 0x%08x"
-        "\n\t\t\t\tInterrupt Pending: 0x%08x",
+        "\n\t\t\tInterrupt Enable%s"
+        "\n\t\t\tSupported Interrupt Number: %s"
+        "\n\t\t\tInterrupt Enable Number: %s"
+        "\n\t\t\tInterrupt Data: 0x%x"
+        "\n\t\t\tInterrupt Addr: 0x%lx"
+        "\n\t\t\tInterrupt ID: %u"
+        "\n\t\t\tInterrupt Mask: 0x%x"
+        "\n\t\t\tInterrupt Pending: 0x%x",
         bit_parser(interrupt_en),
         (supported_interrupt_num < CFG_ARRAY_SIZE(num_desp, char*)) ? num_desp[supported_interrupt_num] : CFG_RESERVED,
         (interrupt_en_num < CFG_ARRAY_SIZE(num_desp, char*)) ? num_desp[interrupt_en_num] : CFG_RESERVED,

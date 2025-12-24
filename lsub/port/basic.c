@@ -52,24 +52,24 @@ static void port_basic_cap_bitmap(uint8_t *data)
     /* save CAP bitmap */
     memcpy(port_info->port_cap_bits, data, CFG_CAP_BITMAP_LEN);
 
-    off = sprintf(port_info->display_buf, "%s", "\n\t\t\t\tCAP Bitmap: ");
+    off = sprintf(port_info->display_buf, "%s", "\n\t\t\t\tPORT_CAP Bitmap: ");
     for (i = CFG_CAP_BITMAP_LEN - 1, j = 1; i >= 0; i--, j++) {
         off += sprintf(port_info->display_buf + off, "%02x", port_info->port_cap_bits[i]);
         if (j == (CFG_CAP_BITMAP_LEN >> 1)) {
-            off += sprintf(port_info->display_buf + off, "%s", "\n\t\t\t\t            ");
+            off += sprintf(port_info->display_buf + off, "%s", "\n\t\t\t\t                 ");
         } else if ((j != CFG_CAP_BITMAP_LEN) && ((j % CFG_DWORD_LEN) == 0)) {
             off += sprintf(port_info->display_buf + off, "%s", "-");
         }
     }
 
-    off += sprintf(port_info->display_buf + off, "\n\t\t\t\tEnabled Port Cap:\n\t\t\t\t\t");
+    off += sprintf(port_info->display_buf + off, "\n\t\t\t\tEnabled Port Cap: ");
 
     for (uint8_t k = 0; k < PORT_CAP_NUM; k++) {
         if (to_1bit(data, k)) {
             off += sprintf(port_info->display_buf + off, "%s ", port_cap_list[k]);
             cnt++;
             if (cnt % LINE_PARSE == 0) {
-                off += sprintf(port_info->display_buf + off, "\n\t\t\t\t\t");
+                off += sprintf(port_info->display_buf + off, "\n\t\t\t\t                  ");
             }
         }
     }
@@ -91,8 +91,9 @@ static void port_basic_info(uint8_t *data)
     port_type = to_1bit(data, CFG_BIT16);
     domain_boundary = to_1bit(data, CFG_BIT17);
 
-    sprintf(port_info->display_buf, "\n\t\t\t\tPort info: index:%u type:%s boundary%s", port_index,
-            port_type ? "Virtual" : "Physical", bit_parser(domain_boundary));
+    sprintf(port_info->display_buf, "\n\t\t\t\tPort info:\n\t\t\t\t\tPort index:%u"
+            "\n\t\t\t\t\tPort type:%s\n\t\t\t\t\tEnumeration Boundary%s",
+            port_index, port_type ? "Virtual" : "Physical", bit_parser(domain_boundary));
 
     printf("%s", port_info->display_buf);
 }
@@ -108,7 +109,8 @@ static void port_basic_nb_info(uint8_t *data)
     port_data = data;
     port_index = (uint16_t)to_chunkbits(port_data, CFG_BIT0, CFG_BIT15);
 
-    sprintf(port_info->display_buf, "\n\t\t\t\tNB-Port info: index:%u", port_index);
+    sprintf(port_info->display_buf,
+            "\n\t\t\t\tNeighbor Port Info:\n\t\t\t\t\tNeighbor_port_idx:%u", port_index);
     printf("%s", port_info->display_buf);
 
     guid_data = data + CFG_DWORD_LEN;
@@ -118,9 +120,8 @@ static void port_basic_nb_info(uint8_t *data)
     version = (uint8_t)to_chunkbits(guid_data, CFG_BIT28, CFG_BIT31);
     device_id = (uint16_t)to_chunkbits(guid_data, CFG_BIT32, CFG_BIT47);
     vendor_id = (uint16_t)to_chunkbits(guid_data, CFG_BIT48, CFG_BIT63);
-
-    sprintf(port_info->display_buf, "\n\t\t\t\tNB-GUID: %04x-%04x-%01x-%01x-000000-%016lx",
-        vendor_id, device_id, version, type, seq_num);
+    sprintf(port_info->display_buf, "\n\t\t\t\t\tNeighbor_port_GUID: "
+            "%04x-%04x-%01x-%01x-000000-%016lx", vendor_id, device_id, version, type, seq_num);
     printf("%s", port_info->display_buf);
 }
 
@@ -130,7 +131,7 @@ static void port_basic_cna(uint8_t *data)
 
     cna = (uint32_t)to_chunkbits(data, CFG_BIT0, CFG_BIT23);
 
-    sprintf(port_info->display_buf, "\n\t\t\t\tCNA: 0x%x", cna);
+    sprintf(port_info->display_buf, "\n\t\t\t\tPort CNA: 0x%x", cna);
 
     printf("%s", port_info->display_buf);
 }
@@ -144,7 +145,7 @@ static void port_basic_reset(uint8_t *data)
     port_type = to_1bit(port_data, CFG_BIT16);
     if (port_type == 0) {
         port_rst = to_1bit(data, CFG_BIT0);
-        (void)sprintf(port_info->display_buf, "\n\t\t\t\tPort Rst: 0x%x", port_rst);
+        (void)sprintf(port_info->display_buf, "\n\t\t\t\tPort Reset: 0x%x", port_rst);
         (void)printf("%s", port_info->display_buf);
     }
 }
