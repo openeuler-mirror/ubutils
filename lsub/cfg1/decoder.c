@@ -41,10 +41,10 @@ static int cfg1_decoder_cmdq(uint8_t *data, char *display_buf, int off)
     cmdq_addr = to_chunkbits(cmdq_data, CFG_BIT6, CFG_BIT47);
 
     ret_off += sprintf(display_buf + ret_off,
-        "\n\t\t\t\tcmdq en%s cmdq depth use:%u"
-        "\n\t\t\t\tcmdq wr idx:%u cmdq err resp%s"
-        "\n\t\t\t\tcmdq rd idx:%u cmdq err%s cmdq err reason:%s"
-        "\n\t\t\t\tcmdq base addr:0x%lx",
+        "\n\t\t\tDECODER_CMDQ_CFG: cmdq_en%s cmdq_depth_use:%u"
+        "\n\t\t\tDECODER_CMDQ_PROD: cmdq_wr_idx:%u cmdq_err_resp%s"
+        "\n\t\t\tDECODER_CMDQ_CONS: cmdq_rd_idx:%u cmdq_err%s cmdq_err_reason:%s"
+        "\n\t\t\tDECODER_CMDQ_BASE_ADDR: cmdq_base_addr:0x%lx",
         bit_parser(cmdq_en), cmdq_size, cmdq_wr_idx,
         bit_parser(cmdq_wr_err), cmdq_rd_idx, bit_parser(cmdq_rd_err),
         (cmdq_rd_err_reason < CFG_ARRAY_SIZE(err_reason, char*)) ?
@@ -80,10 +80,10 @@ static int cfg1_decoder_eventq(uint8_t *data, char *display_buf, int off)
     eventq_addr = to_chunkbits(eventq_data, CFG_BIT6, CFG_BIT47);
 
     ret_off += sprintf(display_buf + ret_off,
-        "\n\t\t\t\teventq en%s eventq depth use:%u"
-        "\n\t\t\t\teventq wr idx:%u eventq ovfl err%s"
-        "\n\t\t\t\teventq rd idx:%u eventq ovfl err resp%s"
-        "\n\t\t\t\teventq base addr:0x%lx",
+        "\n\t\t\tDECODER_EVENTQ_CFG: eventq_en%s eventq_depth_use:%u"
+        "\n\t\t\tDECODER_EVENTQ_PROD: eventq_wr_idx:%u eventq_ovfl_err%s"
+        "\n\t\t\tDECODER_EVENTQ_CONS: eventq_rd_idx:%u eventq_ovfl_err_resp%s"
+        "\n\t\t\tDECODER_EVENTQ_BASE_ADDR: eventq_base_addr:0x%lx",
         bit_parser(eventq_en), eventq_size, eventq_wr_idx,
         bit_parser(eventq_wr_err), eventq_rd_idx, bit_parser(eventq_rd_err),
         eventq_addr);
@@ -120,7 +120,7 @@ void cfg1_decoder_cap(uint8_t *data, uint32_t data_len)
     slice_ver = slice_get_version(data);
     slice_size = slice_get_size(data);
     off = sprintf(cfg1_info->display_buf,
-        "\n\t\tCFG1_DECODER_CAP: slice[0x%x, 0x%x] id[%d]",
+        "\n\t\tCFG1_CAP1_DECODER: slice[0x%x, 0x%x] id[%d]",
         slice_ver, slice_size, CFG1_DECODER_CAP_ID);
 
     if (slice_size < DECODER_LEN || data_len < DECODER_LEN) {
@@ -133,13 +133,15 @@ void cfg1_decoder_cap(uint8_t *data, uint32_t data_len)
     cmd_size = (uint8_t)to_chunkbits(decoder_data, CFG_BIT12, CFG_BIT15);
     mmio_size = (uint8_t)to_chunkbits(decoder_data, CFG_BIT16, CFG_BIT18);
     off += sprintf(cfg1_info->display_buf + off,
-        "\n\t\t\t\tEventq depth:%u Cmdq depth:%u mmio size:%s",
+        "\n\t\t\tDECODER: "
+        "Eventq_depth:%u Cmdq_depth:%u mmio_size:%s",
         event_size, cmd_size, mmio_size_parser(mmio_size));
     decoder_data += CFG_DWORD_LEN;
 
     decoder_en = to_1bit(decoder_data, CFG_BIT0);
     off += sprintf(cfg1_info->display_buf + off,
-        "\n\t\t\t\tDecoder en%s", bit_parser(decoder_en));
+        "\n\t\t\tDECODER_CTRL: Decoder_en%s",
+        bit_parser(decoder_en));
     decoder_data += CFG_DWORD_LEN;
 
     if (ub_is_ibus_controller(cfg1_info->uent)) {
@@ -149,7 +151,8 @@ void cfg1_decoder_cap(uint8_t *data, uint32_t data_len)
         decoder_data += CFG_QWORD_LEN;
         usi_idx = to_uint32(decoder_data);
         off += sprintf(cfg1_info->display_buf + off,
-            "\n\t\t\t\tMATT BA:0x%lx MMIO BA:0x%lx USI IDX:%u", matt_ba, mmio_ba, usi_idx);
+            "\n\t\t\tDECODER_MATT_BA: 0x%lx\n\t\t\tDECODER_MMIO_BA: 0x%lx"
+            "\n\t\t\tDECODER_USI_IDX: %u", matt_ba, mmio_ba, usi_idx);
     }
 
     off = cfg1_decoder_cmdq(data + DECODER_CMDQ, cfg1_info->display_buf, off);

@@ -26,7 +26,7 @@ void cfg1_ub_mem_cap(uint8_t *data, uint32_t data_len)
     slice_ver = slice_get_version(data);
     slice_size = slice_get_size(data);
     off = sprintf(cfg1_info->display_buf,
-        "\n\t\tCFG1_UB_MEM_CAP: slice[0x%x, 0x%x] id[%d]",
+        "\n\t\tCFG1_CAP6_UB_MEM: slice[0x%x, 0x%x] id[%d]",
         slice_ver, slice_size, CFG1_UB_MEM_CAP_ID);
 
     if (slice_size < UB_MEM_LEN || data_len < UB_MEM_LEN) {
@@ -38,6 +38,6 @@ void cfg1_ub_mem_cap(uint8_t *data, uint32_t data_len)
     usi_idx = to_uint32(ub_mem_data);
 
     off += sprintf(cfg1_info->display_buf + off,
-        "\n\t\t\t\tUBMEM_USI_IDX:%u", usi_idx);
+        "\n\t\t\tUB_MEM_USI_IDX: %u", usi_idx);
     (void)printf("%s", cfg1_info->display_buf);
 }

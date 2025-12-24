@@ -29,7 +29,7 @@ void cfg1_int_type2_cap(uint8_t *data, uint32_t data_len)
     slice_ver = slice_get_version(data);
     slice_size = slice_get_size(data);
     off = sprintf(cfg1_info->display_buf,
-        "\n\t\tCFG1_INT_TYPE2_CAP: slice[0x%x, 0x%x] id[%d]",
+        "\n\t\tCFG1_CAP4_INT_TYPE2: slice[0x%x, 0x%x] id[%d]",
         slice_ver, slice_size, CFG1_INT_TYPE2_CAP_ID);
 
     if (slice_size < CFG1_INT_TYPE2_LEN || data_len < CFG1_INT_TYPE2_LEN) {
@@ -62,12 +62,13 @@ void cfg1_int_type2_cap(uint8_t *data, uint32_t data_len)
     interrupt_en = to_1bit(pos, CFG_BIT0);
 
     off += sprintf(cfg1_info->display_buf + off,
-        "\n\t\t\t\tMax Index of Interrupt Vector:%u"
-        "\n\t\t\t\tMax Index of Interrupt Address:0x%lx"
-        "\n\t\t\t\tInterrupt Vector Table Start Address:0x%lx"
-        "\n\t\t\t\tInterrupt Address Table Start Address:0x%lx"
-        "\n\t\t\t\tInterrupt Pending Table Start Address:0x%lx"
-        "\n\t\t\t\tInterrupt ID:%u Interrupt Mask%s Interrupt Enable%s",
+        "\n\t\t\tMax Index of Interrupt Vector: %u"
+        "\n\t\t\tMax Index of Interrupt Address: 0x%lx"
+        "\n\t\t\tInterrupt Vector Table Start Address: 0x%lx"
+        "\n\t\t\tInterrupt Address Table Start Address: 0x%lx"
+        "\n\t\t\tInterrupt Pending Table Start Address: 0x%lx"
+        "\n\t\t\tInterrupt ID: %u\n\t\t\tInterrupt Mask%s"
+        "\n\t\t\tInterrupt Enable%s",
         interrupt_vec_tbl_num, interrupt_addr_tbl_num,
         interrupt_vec_tbl_start_addr, interrupt_addr_tbl_start_addr,
         interrupt_pending_tbl_start_addr, interrupt_id,

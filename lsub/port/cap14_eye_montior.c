@@ -25,7 +25,7 @@ void port_cap14_eye_monitor(uint8_t *data, uint32_t data_len)
 
     slice_ver = slice_get_version(data);
     slice_size = slice_get_size(data);
-    sprintf(port_info->display_buf, "\n\t\tport eye monitor: slice[0x%x, 0x%x] id[%u]", slice_ver, slice_size,
+    sprintf(port_info->display_buf, "\n\t\tPORT_CAP14_EYE_MONITOR: slice[0x%x, 0x%x] id[%u]", slice_ver, slice_size,
             port_cap_id);
     printf("%s", port_info->display_buf);
 
@@ -37,7 +37,8 @@ void port_cap14_eye_monitor(uint8_t *data, uint32_t data_len)
 
     cur_data = data + PEM_CTRL;
     tmp0 = to_chunkbits(cur_data, CFG_BIT0, CFG_BIT7);
-    off = sprintf(port_info->display_buf, "\n\t\t\t\tEye Monitor test Bit map:0x%02x", (uint8_t)tmp0);
+    off = sprintf(port_info->display_buf,
+                  "\n\t\t\tEYE MONITOR Control 1: Eye Monitor Test:0x%x", (uint8_t)tmp0);
 
     cur_data = data + PEM_STA;
 
@@ -46,8 +47,8 @@ void port_cap14_eye_monitor(uint8_t *data, uint32_t data_len)
         tmp1 = to_chunkbits(cur_data, CFG_BIT16, CFG_BIT31);
         off += sprintf(port_info->display_buf + off,
                        "\n\t\t\tLane%u State:"
-                       "\n\t\t\t\teye test status:%s"
-                       "\n\t\t\t\teye test result:0x%x",
+                       "\n\t\t\t\tEye Monitor Test Execution Status:%s"
+                       "\n\t\t\t\tEye Monitor Test Result:0x%x",
                        i, get_description(tmp0, eye_test_desc),
                        (uint16_t)tmp1);
 
