@@ -22,6 +22,22 @@ Show detailed help on available options. This option should be used stand-alone.
 .TP
 .B -t
 Show a topo-like diagram containing all entities, ports and connections between them.
+For example topo like:
++----------------+               +-------+
+|Bus controller0 |port0:---:port0| UBPU0 |
++----------------+               +-------+
++----------------+               +-------+
+|Bus controller0 |port1:---:port0| UBPU1 |
++----------------+               +-------+
+Bus controller0 entity num: [00001] or "00001"( using "" if it appears again)
+UBPU0 entity num: [00002]
+UBPU1 entity num: [00003]
+port0: 000
+port1: 001
+it will show:
+---[00001]-+-000-000---[00002]---000-000---"00001"
+           \-001-000---[00003]---000-001---"00001"
+
 .TP
 .B -l
 Show UB entities list. This list can display the connection between MUE(management UB entity) and

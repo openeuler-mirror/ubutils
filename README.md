@@ -1,3 +1,4 @@
+
 # 📌 Introduction
 
 Ubutils is the basic DFX tool of ubus, including setub, lsub and ub.ids.
@@ -94,9 +95,7 @@ Kernel version: openeuler OLK-6.6
 
 # 📄 Connection and contribution
 
-Issue feedback: Submit an issue in the openeuler community
-Code contribution: Follow Huawei's kernel coding standards and submit patches via Gerrit
-
+Issue feedback: Submit an issue in the openeuler community.
 
 # 📌 Copyright Notice
 
