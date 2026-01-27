@@ -124,7 +124,7 @@ static void pl_phy_cap1(uint8_t *data)
     int off;
 
     static const char *phy_mult_desc[] = { "PHY-Mode1", "PHY-Mode2" };
-    static const char *fec_mult_desc[] = { "Mode1-RS(128,120,T=2)", "Mode2-RS(128,120,T=4)"};
+    static const char *fec_mult_desc[] = { "RS(128,120,T=2)", "RS(128,120,T=4)"};
     static const char *eq_mult_desc[] = { "Full-EQ", "Only_Highest_Data_Rate_EQ",
                                           "Skip_EQ" };
 
