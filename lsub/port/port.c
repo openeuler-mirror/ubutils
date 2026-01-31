@@ -12,8 +12,8 @@
 struct ub_entity_cfg_info *port_info;
 unsigned int port_cap_id;
 struct val_desc fec_desc[FEC_DESC_NUM] = { { 0x0, "FEC Bypass" },
-                                       { 0x1, "Mode0 RS(128, 120,T=2)" },
-                                       { 0x2, "Mode1 RS(128, 120,T=4)" },
+                                       { 0x1, "RS(128, 120,T=2)" },
+                                       { 0x2, "RS(128, 120,T=4)" },
                                        { INVALID_DESC, "" } };
 struct val_desc bcrc_desc[BCRC_DESC_NUM] = { { 0x0, "No BCRC" }, { 0x1, "CRC30" },
                                         { INVALID_DESC, "" } };
