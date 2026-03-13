@@ -109,6 +109,7 @@ static void cfg0_guid(uint8_t *data)
     uint8_t *guid_data;
     uint16_t vendor_id;
     uint64_t seq_num;
+    uint32_t rsvd;
 
     /**
       * +-----------+-----------+---------+------+----------+-----------------+
@@ -119,13 +120,14 @@ static void cfg0_guid(uint8_t *data)
     guid_data = data;
     seq_num = to_uint64(guid_data);
     guid_data += CFG_QWORD_LEN;
+    rsvd = (uint32_t)to_chunkbits(guid_data, CFG_BIT0, CFG_BIT23);
     type = (uint8_t)to_chunkbits(guid_data, CFG_BIT24, CFG_BIT27);
     version = (uint8_t)to_chunkbits(guid_data, CFG_BIT28, CFG_BIT31);
     device_id = (uint16_t)to_chunkbits(guid_data, CFG_BIT32, CFG_BIT47);
     vendor_id = (uint16_t)to_chunkbits(guid_data, CFG_BIT48, CFG_BIT63);
 
-    sprintf(cfg0_info->display_buf, "\n\t\t\t\tGUID: %04x-%04x-%01x-%01x-000000-%016lx",
-        vendor_id, device_id, version, type, seq_num);
+    sprintf(cfg0_info->display_buf, "\n\t\t\t\tGUID: %04x-%04x-%01x-%01x-%06x-%016lx",
+        vendor_id, device_id, version, type, rsvd, seq_num);
 
     printf("%s", cfg0_info->display_buf);
 }
@@ -160,10 +162,6 @@ static void cfg0_eid(uint8_t *data)
 static void cfg0_ubfm_eid(uint8_t *data)
 {
     int off;
-
-    if (!ub_is_primary(cfg0_info->uent)) {
-        return;
-    }
 
     off = sprintf(cfg0_info->display_buf, "\n\t\t\t\tUBFM EID: ");
     (void)parse_eid(data, cfg0_info->display_buf + off);

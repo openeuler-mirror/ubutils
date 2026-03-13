@@ -105,6 +105,7 @@ static void port_basic_nb_info(uint8_t *data)
     uint8_t *guid_data, *port_data;
     uint8_t type, version;
     uint64_t seq_num;
+    uint32_t rsvd;
 
     port_data = data;
     port_index = (uint16_t)to_chunkbits(port_data, CFG_BIT0, CFG_BIT15);
@@ -116,12 +117,13 @@ static void port_basic_nb_info(uint8_t *data)
     guid_data = data + CFG_DWORD_LEN;
     seq_num = to_uint64(guid_data);
     guid_data += CFG_QWORD_LEN;
+    rsvd = (uint32_t)to_chunkbits(guid_data, CFG_BIT0, CFG_BIT23);
     type = (uint8_t)to_chunkbits(guid_data, CFG_BIT24, CFG_BIT27);
     version = (uint8_t)to_chunkbits(guid_data, CFG_BIT28, CFG_BIT31);
     device_id = (uint16_t)to_chunkbits(guid_data, CFG_BIT32, CFG_BIT47);
     vendor_id = (uint16_t)to_chunkbits(guid_data, CFG_BIT48, CFG_BIT63);
     sprintf(port_info->display_buf, "\n\t\t\t\t\tNeighbor_port_GUID: "
-            "%04x-%04x-%01x-%01x-000000-%016lx", vendor_id, device_id, version, type, seq_num);
+            "%04x-%04x-%01x-%01x-%06x-%016lx", vendor_id, device_id, version, type, rsvd, seq_num);
     printf("%s", port_info->display_buf);
 }
 

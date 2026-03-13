@@ -15,10 +15,10 @@
 #include "lsub.h"
 
 typedef FILE * ub_ids_file;
-#define ub_ids_gets(file, line, size) fgets(line, size, file)
-#define ub_ids_eof(file) feof(file)
-#define ub_ids_open(uacc) fopen((uacc)->id_file_name, "r")
-#define ub_ids_close(file) fclose(file)
+#define UB_IDS_GETS(file, line, size) fgets(line, size, file)
+#define UB_IDS_EOF(file) feof(file)
+#define UB_IDS_OPEN(uacc) fopen((uacc)->id_file_name, "r")
+#define UB_IDS_CLOSE(file) fclose(file)
 #define UB_ERROR_MSG(file, err) \
     do { if (!(err) && ferror(file)) (err) = "I/O error"; } while (0)
 
@@ -124,12 +124,13 @@ static char *format_name_pair(char *buf, size_t size, struct ub_ids_name *n)
     char class_part[MAX_NAME_LEN] = {};
     char vendor_part[MAX_NAME_LEN] = {};
     char device_part[MAX_NAME_LEN] = {};
+    static char ub_ids_err[] = "<ub ids parse: buffer too small>";
 
     if (n->base_name && n->sub_name) {
         res = snprintf(class_part, sizeof(class_part), "%s %s ", n->sub_name, n->classnum_name);
     } else if (n->base_name) {
         res = snprintf(class_part, sizeof(class_part), "%s %s ", n->base_name, n->classnum_name);
-    } else{
+    } else {
         res = snprintf(class_part, sizeof(class_part), "Class %s ", n->classnum_name);
     }
 
@@ -144,9 +145,8 @@ static char *format_name_pair(char *buf, size_t size, struct ub_ids_name *n)
     }
 
     res = snprintf(buf, size, "%s%s%s%s", class_part, vendor_part, device_part, n->numeric_name);
-
     if (res < 0 || (size_t)res >= size)
-        return (char*)"<ub ids parse: buffer too small>";
+        return ub_ids_err;
 
     return buf;
 }
@@ -183,7 +183,7 @@ static int ub_id_insert(struct ub_access *uacc, struct ub_ids_id *ids_id,
     uint32_t id56 = id_pair(ids_id->base_id, ids_id->sub_id);
     unsigned int h = id_hash(ids_id->cat, id12, id34, id56);
     struct id_entry *n = uacc->id_hash ? uacc->id_hash[h] : NULL;
-    uint32_t len = strlen(text) + 1;
+    uint32_t len = (uint32_t)strlen(text) + 1;
 
     while (n && (n->id12 != id12 || n->id34 != id34 || n->id56 || n->cat != ids_id->cat))
         n = n->next;
@@ -382,7 +382,7 @@ static const char *ids_line_preprocess(char **ptr, char *line,
     while (**ptr && **ptr != '\n' && **ptr != '\r')
         (*ptr)++;
 
-    if (!(**ptr) && !ub_ids_eof(ids_file))
+    if (!(**ptr) && !UB_IDS_EOF(ids_file))
         return "Line too long";
     **ptr = 0;
     if (*ptr > line && ((*ptr)[-1] == ' ' || (*ptr)[-1] == '\t'))
@@ -418,7 +418,7 @@ static const char *id_parse_list(struct ub_access *uacc,
     ids_id.cat = 0xffffffff;
     ids_id.sub_id = SUB_CONFIG;
     ids_id.vendor_id = ids_id.device_id = ids_id.subsys_vendor_id = ids_id.subsys_id = ids_id.base_id= 0;
-    while (ub_ids_gets(ids_file, line, sizeof(line))) {
+    while (UB_IDS_GETS(ids_file, line, sizeof(line))) {
         (*line_no)++;
         err = ids_line_preprocess(&p, line, ids_file, &continue_flag);
         if (err)
@@ -426,7 +426,7 @@ static const char *id_parse_list(struct ub_access *uacc,
         if (continue_flag)
             continue;
 
-        nest = p - line;
+        nest = (int)(p - line);
         if (!nest) { /* Top-level entries */
             err = ids_parse_top_level(uacc, &ids_id, &p, &continue_flag);
             if (err)
@@ -460,13 +460,14 @@ static const char *id_parse_list(struct ub_access *uacc,
 
 static int ub_load_name_list(struct ub_access *uacc)
 {
+    static char default_ids_path[] = DEFAULT_IDS_PATH;
     ub_ids_file ids_file;
     int line_no;
     const char *err;
     char *real_file_name;
 
     if (!uacc->id_file_name) {
-        uacc->id_file_name = (char *)DEFAULT_IDS_PATH;
+        uacc->id_file_name = default_ids_path;
     } else {
         real_file_name = realpath(uacc->id_file_name, NULL);
         if (!real_file_name)
@@ -476,12 +477,12 @@ static int ub_load_name_list(struct ub_access *uacc)
         uacc->id_file_name = real_file_name;
         uacc->free_id_name = 1;
     }
-    if (!(ids_file = ub_ids_open(uacc)))
+    if (!(ids_file = UB_IDS_OPEN(uacc)))
         return -1;
 
     err = id_parse_list(uacc, ids_file, &line_no);
     UB_ERROR_MSG(ids_file, err);
-    ub_ids_close(ids_file);
+    UB_IDS_CLOSE(ids_file);
     if (err) {
         uacc->error("%s at %s, line %d\n", err, uacc->id_file_name, line_no);
         return -1;
@@ -494,6 +495,7 @@ char *ub_lookup_name(struct ub_access *uacc, char *buf, size_t size,
                      uint32_t vendor_id, uint32_t device_id, uint32_t class_id)
 {
     char *vendor_name, *device_name, *sub_name, *base_name;
+    static char unknown[] = "Device";
     struct ub_ids_name ids_name = {};
     struct ub_ids_id ids_id = {};
     char classbuf[16] = {};
@@ -542,7 +544,7 @@ char *ub_lookup_name(struct ub_access *uacc, char *buf, size_t size,
     ids_name.classnum_name = classbuf;
     ids_name.sub_name = sub_name;
     ids_name.base_name = base_name;
-    ids_name.unknown = (char *)"Device";
+    ids_name.unknown = unknown;
     return format_name_pair(buf, size, &ids_name);
 }
 
