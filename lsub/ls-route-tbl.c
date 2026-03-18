@@ -16,19 +16,19 @@
 static void show_default_route_tbl(struct ub_entity *uent, uint16_t port_nums)
 {
     uint32_t *default_tlb;
-    uint32_t ebw;
     uint32_t ret;
-    uint32_t i;
+    int ebw;
+    int i;
 
-    ebw = ROUTE_TBL_ROUTE_TBL_EBW(port_nums);
-    default_tlb = (uint32_t *)calloc(ebw, sizeof(uint32_t));
+    ebw = (int)ROUTE_TBL_ROUTE_TBL_EBW(port_nums);
+    default_tlb = (uint32_t *)calloc((size_t)ebw, (size_t)sizeof(uint32_t));
     if (!default_tlb) {
         printf("RouteTable Default table alloc failed.\n");
         return;
     }
 
     ret = (uint32_t)ub_read_block(uent, ROUTE_TBL_SLICE + ROUTE_TBL_DEFAULT_ROUTE_TBL,
-                                  (uint8_t *)default_tlb, sizeof(uint32_t) * ebw);
+                                  (uint8_t *)default_tlb, (int)sizeof(uint32_t) * ebw);
     if (ret) {
         printf("RouteTable default table read failed.\n");
         free(default_tlb);
@@ -37,7 +37,7 @@ static void show_default_route_tbl(struct ub_entity *uent, uint16_t port_nums)
 
     printf("Default RouteTable:\n");
     for (i = 0; i < ebw; i++) {
-        printf("\t\t[%04lx] %08x\n", i * sizeof(uint32_t), default_tlb[i]);
+        printf("\t\t[%04x] %08x\n", (uint32_t)(i * (int)sizeof(uint32_t)), default_tlb[i]);
     }
     free(default_tlb);
 }
@@ -51,7 +51,8 @@ static void show_exact_route_tbl(struct ub_entity *uent, uint16_t port_nums,
     uint32_t ret;
     uint32_t ers;
 
-    ret = (uint32_t)ub_read_block(uent, ROUTE_TBL_SLICE + ROUTE_TBL_EXACT_ROUTE_SUP,
+    ret = (uint32_t)ub_read_block(uent, (uint64_t)(ROUTE_TBL_SLICE +
+                                  ROUTE_TBL_EXACT_ROUTE_SUP),
                                   (uint8_t *)&ers, sizeof(ers));
     if (ret) {
         printf("RouteTable exact table info read failed.\n");
@@ -63,13 +64,14 @@ static void show_exact_route_tbl(struct ub_entity *uent, uint16_t port_nums,
         return;
     }
 
-    ebw = ROUTE_TBL_ROUTE_TBL_EBW(port_nums);
+    ebw = (uint32_t)ROUTE_TBL_ROUTE_TBL_EBW(port_nums);
     exact_tlb = (uint32_t *)calloc(ebw, sizeof(uint32_t));
     if (!exact_tlb) {
         printf("RouteTable Exact table alloc failed.\n");
         return;
     }
-    ret = (uint32_t)ub_read_block(uent, ROUTE_TBL_SLICE + ROUTE_TBL_ROUTE_TBL_ENTRY(port_nums, cna),
+    ret = (uint32_t)ub_read_block(uent, ROUTE_TBL_SLICE +
+                                  ROUTE_TBL_ROUTE_TBL_ENTRY(port_nums, cna),
                                   (uint8_t *)exact_tlb, (int)(sizeof(uint32_t) * ebw));
     if (ret) {
         printf("RouteTable exact table entry read failed.\n");

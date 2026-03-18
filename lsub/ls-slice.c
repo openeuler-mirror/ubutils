@@ -27,7 +27,7 @@ int slice_read(struct ub_entity *uent, uint32_t slice_addr, uint8_t *data_buf, u
 
     /* read slice body */
     slice_used_size = (uint32_t)to_chunkbits(slice_header, CFG_BIT4, CFG_BIT31);
-    *data_len = min(slice_used_size * CFG_DWORD_LEN, *data_len);
+    *data_len = MIN(slice_used_size * CFG_DWORD_LEN, *data_len);
 
     ret_code = ub_read_block(uent, slice_addr, data_buf, (int)(*data_len));
     if (ret_code) {

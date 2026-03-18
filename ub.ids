@@ -25,6 +25,10 @@ cc08  Huawei Technologies Co., Ltd.
 	d808  CCU management ub entity
 	d809  CCU ub entity
 	d80a  Bus controller
+	d80b  URMA UBoE management ub entity
+	d80c  URMA UBoE ub entity
+	8200  SP500U Family management ub entity
+	8201  SP500U Family ub entity
 C 00  Bus controller
 	00  UB bus controller
 C 01  Memory controller

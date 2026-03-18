@@ -21,13 +21,14 @@ void port_cap15_qdlws(uint8_t *data, uint32_t data_len)
     int off;
 
     static struct val_desc qdlws_desc[] = {
-        { 0x0, "IDLE" },     { 0x1, "NAK" }, { 0x2, "In progress" }, { 0x3, "Timeout" }, { 0x4, "Successful Done" },
+        { 0x0, "IDLE" }, { 0x1, "NAK" }, { 0x2, "In progress" }, { 0x3, "Timeout" }, { 0x4, "Successful Done" },
         { INVALID_DESC, "" }
     };
 
     slice_ver = slice_get_version(data);
     slice_size = slice_get_size(data);
-    sprintf(port_info->display_buf, "\n\t\tPORT_CAP15_QDLWS: slice[0x%x, 0x%x] id[%u]", slice_ver, slice_size, port_cap_id);
+    sprintf(port_info->display_buf, "\n\t\tPORT_CAP15_QDLWS: slice[0x%x, 0x%x] id[%u]",
+            slice_ver, slice_size, port_cap_id);
     printf("%s", port_info->display_buf);
 
     if (slice_size < PQDLWS_LEN || data_len < PQDLWS_LEN) {

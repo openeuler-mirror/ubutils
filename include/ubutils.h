@@ -42,7 +42,7 @@
 #define HASH_SIZE 4099
 #define HEX 16
 
-#define min(a, b) ((a) < (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 struct id_entry {
     struct id_entry *next;
@@ -126,8 +126,8 @@ struct ub_access {
 };
 
 struct ub_methods {
-    char *name;
-    char *help;
+    const char *name;
+    const char *help;
     void (*config)(struct ub_access *);
     int (*detect)(struct ub_access *);
     void (*init)(struct ub_access *);
@@ -240,6 +240,7 @@ void show_topo(void);
 void ub_free_ubc(void);
 int ub_sel_access_methods(struct ub_access *uacc);
 int ub_init(struct ub_access *uacc);
+int ub_scan_devices(struct ub_access *uacc);
 struct device *ub_scan_one_device(struct ub_entity *uent);
 int ub_scan_uent(struct ub_access *uacc);
 void ub_free_uent(struct ub_entity *uent);
@@ -256,7 +257,6 @@ void sysfs_get_ue_list(struct ub_entity *uent, uint8_t level);
 int ub_add_bi(struct ub_access *uacc, struct ub_bi *bi);
 void show_bi_info(struct ub_access *uacc, struct lsub_cmd_param *ls_cmd);
 int sysfs_get_bi(struct ub_access *uacc);
-
 
 extern struct ub_methods linux_sysfs;
 
