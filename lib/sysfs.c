@@ -17,8 +17,8 @@
 #include <dirent.h>
 #include <ubutils.h>
 
-static void ub_define_param(struct ub_access *uacc, const char *param,
-                            const char *value, const char *help)
+static void ub_define_param(struct ub_access *uacc, char *param,
+                            char *value, char *help)
 {
     struct ub_param *p;
 
@@ -28,10 +28,10 @@ static void ub_define_param(struct ub_access *uacc, const char *param,
     }
     *p = (struct ub_param) {
         .next = uacc->params,
-        .param = (char *)param,
-        .value = (char *)value,
+        .param = param,
+        .value = value,
         .value_malloced = 0,
-        .help = (char *)help,
+        .help = help,
     };
 
     uacc->params = p;
@@ -68,7 +68,11 @@ static int sysfs_ub_detect(struct ub_access *uacc)
 
 static void sysfs_ub_config(struct ub_access *uacc)
 {
-    ub_define_param(uacc, "sysfs.path", UB_PATH_SYS_BUS_UB, "Path to the sysfs device");
+    static char sysfs_path[] = "sysfs.path";
+    static char ub_sysfs_path[] = UB_PATH_SYS_BUS_UB;
+    static char sysfs_device[] = "Path to the sysfs device";
+
+    ub_define_param(uacc, sysfs_path, ub_sysfs_path, sysfs_device);
 }
 
 static void sysfs_ub_init(struct ub_access *uacc)
@@ -201,10 +205,15 @@ static int ub_parse_instance_sys(struct ub_access *uacc, FILE *file, unsigned in
      }
 
     /* Ignore the first line */
-    (void)fgets(buf, (int)sizeof(buf), file);
+    if (fgets(buf, (int)sizeof(buf), file) == NULL) {
+        uacc->error("Failed to get information from instance");
+        return -EIO;
+    }
+
     while (i < cnt && fgets(buf, (int)sizeof(buf), file)) {
         i++;
-        if (sscanf(buf, "guid:%s type:%01x eid:%05x upi:%04x\n", bi.str, (uint32_t *)&bi.type, &bi.eid, (uint32_t *)&bi.upi) != UB_INSTANCE_PARA_NUM) {
+        if (sscanf(buf, "guid:%s type:%01x eid:%05x upi:%04x\n",
+                   bi.str, (uint32_t *)&bi.type, &bi.eid, (uint32_t *)&bi.upi) != UB_INSTANCE_PARA_NUM) {
             uacc->error("Syntax error in %s", buf);
             continue;
         }
@@ -303,18 +312,17 @@ int sysfs_get_direct_link(struct ub_entity *uent)
     return ret;
 }
 
-static int sysfs_get_string(struct ub_entity *uent, const char *object, char *buf, int mandatory)
+static int sysfs_get_string(struct ub_entity *uent, const char *object, char *buf)
 {
     struct ub_access *uacc = uent->access;
-    void (*warn)(const char *msg, ...) = (mandatory ? uacc->error : uacc->warning);
     char name[OBJNAMELEN] = {0};
     long n;
     int fd;
 
     sysfs_obj_name(uent, object, name);
     if ((fd = open(name, O_RDONLY)) < 0) {
-        if (mandatory || errno != ENOENT)
-            warn("Cannot open %s: %s", name, strerror(errno));
+        if (errno != ENOENT)
+            uacc->error("Cannot open %s: %s", name, strerror(errno));
         return 0;
     }
 
@@ -324,16 +332,16 @@ static int sysfs_get_string(struct ub_entity *uent, const char *object, char *bu
         return 1;
     }
 
-    warn("Error reading %s: %s", name, strerror(errno));
+    uacc->error("Error reading %s: %s", name, strerror(errno));
     close(fd);
     return 0;
 }
 
-static unsigned int sysfs_get_value(struct ub_entity *uent, const char *object, int mandatory)
+static unsigned int sysfs_get_value(struct ub_entity *uent, const char *object)
 {
     char buf[OBJBUFSIZE];
 
-    if (sysfs_get_string(uent, object, buf, mandatory)) {
+    if (sysfs_get_string(uent, object, buf)) {
         return (unsigned int)strtol(buf, NULL, 0);
     }
 
@@ -347,7 +355,7 @@ static char *sysfs_get_link(struct ub_entity *uent, const char *link_name)
 
     sysfs_obj_name(uent, link_name, path);
 
-    if (readlink(path, r_path, sizeof(r_path)) < 0)
+    if (readlink(path, r_path, sizeof(r_path) - 1) < 0)
         return NULL;
 
     sysfs_obj_name(uent, "", path);
@@ -371,6 +379,7 @@ static void sysfs_ub_cleanup(struct ub_access *uacc)
 
     if (uacc->free_id_name) {
         free(uacc->id_file_name);
+        uacc->id_file_name = NULL;
         uacc->free_id_name = 0;
     }
 }
@@ -394,14 +403,14 @@ static int ub_scan_attr_cfg(struct ub_entity *uent, uint32_t uent_num)
         free(driver_path);
     }
 
-    uent->entity_type = (uint8_t)sysfs_get_value(uent, "type", 1);
-    uent->ubc_uent_num = sysfs_get_value(uent, "ubc", 1);
-    uent->vendor_id = sysfs_get_value(uent, "vendor", 1);
-    uent->device_id = (uint16_t)sysfs_get_value(uent, "device", 1);
-    uent->class_code = sysfs_get_value(uent, "class_code", 1);
-    uent->entity_idx = sysfs_get_value(uent, "entity_idx", 1);
-    uent->primary_entity = sysfs_get_value(uent, "primary_entity", 1);
-    uent->bi_eid = sysfs_get_value(uent, "instance", 1);
+    uent->entity_type = (uint8_t)sysfs_get_value(uent, "type");
+    uent->ubc_uent_num = sysfs_get_value(uent, "ubc");
+    uent->vendor_id = sysfs_get_value(uent, "vendor");
+    uent->device_id = (uint16_t)sysfs_get_value(uent, "device");
+    uent->class_code = sysfs_get_value(uent, "class_code");
+    uent->entity_idx = sysfs_get_value(uent, "entity_idx");
+    uent->primary_entity = sysfs_get_value(uent, "primary_entity");
+    uent->bi_eid = sysfs_get_value(uent, "instance");
     sysfs_get_if_mue(uent);
     ub_link_dev(uent->access, uent); /* link uent in uacc */
 
@@ -443,7 +452,7 @@ static int sysfs_ub_scan(struct ub_access *uacc)
         uent = ub_alloc_uent(uacc);
         if (!uent) {
             ret = -ENOMEM;
-            break;
+            goto out_closedir;
         }
 
         ret = ub_scan_attr_cfg(uent, uent_num);
@@ -452,7 +461,7 @@ static int sysfs_ub_scan(struct ub_access *uacc)
             continue;
         }
     }
-
+out_closedir:
     (void)closedir(dir);
 
     return ret;
@@ -535,7 +544,7 @@ static int sysfs_ub_read(struct ub_entity *uent, uint64_t pos, uint8_t *buf, int
         return -EINVAL;
     }
 
-    if (len <= 0 || len > MAX_POSITION) {
+    if (len <= 0 || pos > MAX_POSITION) {
         return -EINVAL;
     }
 
@@ -549,7 +558,7 @@ static int sysfs_ub_read(struct ub_entity *uent, uint64_t pos, uint8_t *buf, int
         return -ENOMEM;
     }
 
-    ret = (int)pread(fd, tmp, (size_t)len * (size_t)TMP_LEN_MULTI, pos);
+    ret = (int)pread(fd, tmp, (size_t)len * (size_t)TMP_LEN_MULTI, (__off_t)pos);
     if (ret < 0) {
         uent->access->warning("uent %05x sysfs_ub_read: read failed: %s",
             uent->uent_num, strerror(errno));
@@ -584,7 +593,7 @@ static int sysfs_ub_write(struct ub_entity *uent, uint64_t pos, uint8_t *buf, in
         return -EINVAL;
     }
 
-    ret = (int)pwrite(fd, buf, (size_t)len, pos);
+    ret = (int)pwrite(fd, buf, (size_t)len, (__off_t)pos);
     if (ret < 0 || ret != len) {
         uent->access->warning("uent %05x sysfs_ub_write: write failed: %s",
             uent->uent_num, strerror(errno));

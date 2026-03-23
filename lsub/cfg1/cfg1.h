@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef LSUB_CFG0_H
-#define LSUB_CFG0_H
+#ifndef LSUB_CFG1_H
+#define LSUB_CFG1_H
 
 #include "../lsub.h"
 

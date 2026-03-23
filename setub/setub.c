@@ -398,14 +398,15 @@ static int parse_guid(char *c, struct ub_guid *guid)
 
 #define TYPE_MASK 0xf
 #define VERSION_MASK 0xf
+#define RSV_MASK 0xffffff
     guid->bits.vendor = (uint16_t)vendor;
     guid->bits.device = (uint16_t)device;
     guid->bits.type = type & TYPE_MASK;
     guid->bits.version = version & VERSION_MASK;
-    guid->bits.rsvd0 = (uint32_t)rsv0;
+    guid->bits.rsvd0 = rsv0 & RSV_MASK;
     guid->bits.seq_num = seq_num;
 
-    (void)printf("guid_h: %016llx guid_l: %016llx\n", guid->datas.guid_h, guid->datas.guid_l);
+    (void)printf("guid_h: 0x%016llx guid_l: 0x%016llx\n", guid->datas.guid_h, guid->datas.guid_l);
 
     return 0;
 }
@@ -594,8 +595,8 @@ int main(int argc, char **argv)
     int ret;
 
     if (argc == 2 && !strcmp(argv[1], "--version")) {
-    	puts("setub version "UBUTILS_VERSION);
-	return 0;
+        puts("setub version "UBUTILS_VERSION);
+        return 0;
     }
 
     uacc = ub_alloc_acc();

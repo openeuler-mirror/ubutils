@@ -348,7 +348,7 @@ int ub_init(struct ub_access *uacc)
 
     if (uacc->method) {
         if (uacc->method >= UB_ACCESS_MAX || !g_ub_methods[uacc->method]) {
-            uacc->error((char *)"This access method is not supported.");
+            uacc->error("This access method is not supported.");
             return -EINVAL;
         }
         uacc->methods = g_ub_methods[uacc->method];
@@ -368,7 +368,7 @@ static void ub_free_params(struct ub_access *uacc)
 {
     struct ub_param *p;
 
-    while (p = uacc->params) {
+    while ((p = uacc->params)) {
         uacc->params = p->next;
         if (p->value_malloced) {
             free(p->value);
@@ -429,7 +429,7 @@ int ub_add_bi(struct ub_access *uacc, struct ub_bi *bi)
         return -ENOMEM;
     }
 
-    (void)strncpy(new_bi->str, bi->str, UB_GUID_MAXLEN - 1);
+    memcpy(new_bi->str, bi->str, UB_GUID_MAXLEN - 1);
     new_bi->type = bi->type;
     new_bi->eid = bi->eid;
     new_bi->upi = bi->upi;
