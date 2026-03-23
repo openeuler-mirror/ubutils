@@ -450,7 +450,7 @@ static void pl_phy_ctrl8_9(uint8_t *data)
     uint8_t *cur_data;
     uint64_t tmp0;
     int off = 0;
-    uint8_t i;
+    int i;
 
     cur_data = data + PL_PHY_CTRL8;
     off = sprintf(port_info->display_buf, "\n\t\t\tPHY Link Control 8 and 9:");

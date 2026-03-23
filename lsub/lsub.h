@@ -155,9 +155,9 @@ enum {
 #define ROUTE_TBL_NUM_OF_TLB_ENTRY          (0x1 * CFG_DWORD_LEN)
 #define ROUTE_TBL_EXACT_ROUTE_SUP           (0x1 * CFG_DWORD_LEN + 2)
 #define ROUTE_TBL_DEFAULT_ROUTE_TBL         (0x10 * CFG_DWORD_LEN)
-#define ROUTE_TBL_ROUTE_TBL_EBW(port_nums)  ((((port_nums) - 1) >> 5) + 1)
+#define ROUTE_TBL_ROUTE_TBL_EBW(port_nums)  ((((port_nums) - 1U) >> 5) + 1U)
 #define ROUTE_TBL_ROUTE_TBL_ENTRY(port_nums, cna) \
-    ((0x10 + (((cna) + 1) * ROUTE_TBL_ROUTE_TBL_EBW(port_nums))) * CFG_DWORD_LEN)
+    ((0x10ULL + (((cna) + 1) * ROUTE_TBL_ROUTE_TBL_EBW(port_nums))) * CFG_DWORD_LEN)
 
 /* eid has 128 bits */
 #define CFG_EID_LEN             0x10
